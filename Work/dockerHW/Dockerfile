@@ -1,6 +1,6 @@
 FROM gcc:4.9
-COPY . /usr/src/myapp
-WORKDIR /usr/src/myapp
-RUN gcc -o myapp main.c
-CMD ["./myapp"]
+COPY . ~/cse3320/Work/dockerHW
+WORKDIR ~/cse3320/Work/dockerHW
+RUN gcc -o dockerHW main.c
+CMD ["./dockerHW"]
 
