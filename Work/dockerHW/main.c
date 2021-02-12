@@ -26,16 +26,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-void signalHandler(int signum)
-{
-  if(pid == 0)
-  {
-    printf("Alarm rang and child is exiting!");
-    exit(EXIT_SUCCESS);
-  }
-}
-
-
+#define START_TIME 10
 
 /*
   fork() a child and print a message from the parent and 
@@ -48,12 +39,11 @@ int main( void )
     and instead goes to the specified function
     so when alarm rings, the program doesn't exit.
   */
-  signal(SIGALRM, signalHandler);
 
   pid_t pid = fork();
 
-  alarm(10); // After 10 seconds, SIGALRM will be generated.
 
+  // Error Handling
   if( pid == -1 )
   {
     // When fork() returns -1, an error happened.
@@ -61,25 +51,30 @@ int main( void )
     exit( EXIT_FAILURE );
   }
 
+
+  // Child Process
   else if ( pid == 0 )
   {
-    // When fork() returns 0, we are in the child process.
     printf("Hello from the child process\n");
-
-    fflush(NULL);
+    int i;
+    for(i = START_TIME; i > 0; i--)
+    {
+      printf("Child counting down...\t%d seconds remaining...\n", i);
+      fflush(NULL);
+      sleep(1);
+    }
     exit( EXIT_SUCCESS );
   }
+
+  // pid == nonzero -> Parent Process
   else 
   {
-    // When fork() returns a positive number, we are in the parent
-  	  // process and the return value is the PID of the newly created
-    // child process.
     int status;
 
     // Force the parent process to wait until the child process 
     // exits
     waitpid(pid, &status, 0 );
-    printf("Hello from the parent process\n");
+    printf("Countdown complete!\n");
     fflush( NULL );
   }
   return EXIT_SUCCESS;
