@@ -45,6 +45,8 @@ int main()
 
   char * cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
 
+  pid_t pid = fork();
+
   while( 1 )
   {
     // Print out the msh prompt
@@ -94,8 +96,10 @@ int main()
       printf("token[%d] = %s\n", token_index, token[token_index] );  
     }
 
+
+    // Exits the shell when either the exit or quit commands are called
     if( !(strcmp(token[0], "exit")) || !(strcmp(token[0], "quit")) )
-	return (EXIT_SUCCESS);
+      return (EXIT_SUCCESS);
 
     free( working_root );
 
