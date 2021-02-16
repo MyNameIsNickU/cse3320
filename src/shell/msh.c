@@ -45,7 +45,8 @@ ID:   1001745062
 
 #define MAX_NUM_ARGUMENTS 5     // Mav shell only supports five arguments
 
-#define MAX_PROCESSES_SHOWN 15
+#define MAX_PROCESSES_SHOWN 15 // Restraint for listpids()
+#define MAX_COMMANDS_SHOWN 15 // Restraint for 'history'
 
 int main()
 {
@@ -56,8 +57,13 @@ int main()
   // Delcared outside of while() to prevent reseting of value.
   int pid_num = 0;
 
+  // If max processes shown, activate this bool.
+  // Allows overwriting while still printing all ids.
+  int pid_max = 0;
+
   // Counts commands inputted for 'history'
   int com_num = 0;
+  int com_max = 0;
 
   while( 1 )
   {
@@ -104,8 +110,27 @@ int main()
     if( token[0] == NULL )
       continue;
 
-    char * com_arr[
+    char * com_arr[MAX_COMMANDS_SHOWN];
+    com_arr[com_num++] = strdup( token[0] );
 
+    if( com_num >= MAX_COMMANDS_SHOWN)
+    {
+      com_num = 0;
+      com_max = 1;
+    }
+
+    if( !strcmp( token[0], "history" ) )
+    {
+      if( com_max == 0 )
+        for(int i = 0; i < com_num; i++)
+          printf("[%d]: %s\n", i, com_arr[i]);
+
+      else
+        for(int i = 0; i < MAX_COMMANDS_SHOWN; i++)
+          printf("[%d]: %s\n", i, com_arr[i]);
+
+      continue;
+    }
     // Now print the tokenized input as a debug check
     // \TODO Remove this code and replace with your shell functionality
 
@@ -136,8 +161,13 @@ int main()
 
     if( !strcmp(token[0], "listpids") )
     {
-      for(int i = 0; i < pid_num; i++)
-        printf("%d: %d\n", i, pid_arr[i]);
+      if( pid_max == 0 )
+        for(int i = 0; i < pid_num; i++)
+          printf("%d: %d\n", i, pid_arr[i]);
+
+      else
+        for(int i = 0; i < MAX_PROCESSES_SHOWN; i++)
+          printf("%d: %d\n", i, pid_arr[i]);
       continue;
     }
 
@@ -150,15 +180,16 @@ int main()
    */
     pid_t pid = fork();
 
-    if( pid != 0)
-    {
     // Recently created process id goes into array for listpids()
     pid_arr[pid_num++] = pid;
 
     // When max pid_arr size reached, resets counter to begin overwriting ids.
-    if( pid_num >= 15 )
-      pid_num == 0;
+    if( pid_num >= MAX_PROCESSES_SHOWN )
+    {
+      pid_num = 0;
+      pid_max = 1;
     }
+
     int exec; // For error handling
     if(pid == 0)
     {
