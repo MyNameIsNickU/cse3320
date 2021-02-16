@@ -90,6 +90,9 @@ int main()
         token_count++;
     }
 
+    if( token[0] == NULL )
+      continue;
+
     // Now print the tokenized input as a debug check
     // \TODO Remove this code and replace with your shell functionality
 
