@@ -45,6 +45,8 @@ ID:   1001745062
 
 #define MAX_NUM_ARGUMENTS 5     // Mav shell only supports five arguments
 
+#define MAX_PROCESSES_SHOWN 15
+
 int main()
 {
 
@@ -53,6 +55,9 @@ int main()
   // Number for counting processes forked
   // Delcared outside of while() to prevent reseting of value.
   int pid_num = 0;
+
+  // Counts commands inputted for 'history'
+  int com_num = 0;
 
   while( 1 )
   {
@@ -99,6 +104,8 @@ int main()
     if( token[0] == NULL )
       continue;
 
+    char * com_arr[
+
     // Now print the tokenized input as a debug check
     // \TODO Remove this code and replace with your shell functionality
 
@@ -125,8 +132,7 @@ int main()
       continue;
     }
 
-    printf("pid_num = %d\n\n", pid_num);
-    pid_t pid_arr[15];
+    pid_t pid_arr[MAX_PROCESSES_SHOWN];
 
     if( !strcmp(token[0], "listpids") )
     {
