@@ -108,7 +108,10 @@ int main()
       return (EXIT_SUCCESS);
 
     if( !strcmp(token[0], "cd") )
+    {
       chdir(token[1]);
+      continue;
+    }
 
     pid_t pid = fork();
     int exec;
