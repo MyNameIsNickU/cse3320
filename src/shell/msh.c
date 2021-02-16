@@ -50,6 +50,10 @@ int main()
 
   char * cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
 
+  // Number for counting processes forked
+  // Delcared outside of while() to prevent reseting of value.
+  int pid_num = 0;
+
   while( 1 )
   {
     // Print out the msh prompt
@@ -66,7 +70,6 @@ int main()
     char *token[MAX_NUM_ARGUMENTS];
 
     int   token_count = 0;
- 
     // Pointer to point to the token
     // parsed by strsep
     char *argument_ptr;
@@ -122,6 +125,16 @@ int main()
       continue;
     }
 
+    printf("pid_num = %d\n\n", pid_num);
+    pid_t pid_arr[15];
+
+    if( !strcmp(token[0], "listpids") )
+    {
+      for(int i = 0; i < pid_num; i++)
+        printf("%d: %d\n", i, pid_arr[i]);
+      continue;
+    }
+
 
     /*
     /  If command doesn't need special handling, forks the process and CHILD execs.
@@ -130,7 +143,17 @@ int main()
     /  Continues shell once child is complete.
    */
     pid_t pid = fork();
-    int exec;
+
+    if( pid != 0)
+    {
+    // Recently created process id goes into array for listpids()
+    pid_arr[pid_num++] = pid;
+
+    // When max pid_arr size reached, resets counter to begin overwriting ids.
+    if( pid_num >= 15 )
+      pid_num == 0;
+    }
+    int exec; // For error handling
     if(pid == 0)
     {
       exec = execvp(token[0], &token[0]);
