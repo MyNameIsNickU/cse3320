@@ -90,6 +90,9 @@ int main()
         token_count++;
     }
 
+
+    // Handles empty input so program doesn't seg fault.
+    // Restarts the loop when empty.
     if( token[0] == NULL )
       continue;
 
@@ -107,12 +110,25 @@ int main()
     if( !(strcmp(token[0], "exit")) || !(strcmp(token[0], "quit")) )
       return (EXIT_SUCCESS);
 
+
+    /*
+    /  Uses chdir() to change directory.
+    /  Doesn't fork as only works in parent.
+    /  Restarts loop upon completion
+   */
     if( !strcmp(token[0], "cd") )
     {
       chdir(token[1]);
       continue;
     }
 
+
+    /*
+    /  If command doesn't need special handling, forks the process and CHILD execs.
+    /  If the command isn't found, error message prints 
+    /  Parent process waits for child to finish execution.
+    /  Continues shell once child is complete.
+   */
     pid_t pid = fork();
     int exec;
     if(pid == 0)
@@ -131,8 +147,10 @@ int main()
       waitpid(pid, &status, 0);
     }
 
+
     free( working_root );
 
   }
   return 0;
 }
+
