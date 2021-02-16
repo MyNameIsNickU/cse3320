@@ -1,3 +1,8 @@
+/*
+Name: Nicholas Untrecht
+ID:   1001745062
+*/
+
 // The MIT License (MIT)
 // 
 // Copyright (c) 2016, 2017, 2021 Trevor Bakker 
@@ -44,8 +49,6 @@ int main()
 {
 
   char * cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
-
-  pid_t pid = fork();
 
   while( 1 )
   {
@@ -100,6 +103,27 @@ int main()
     // Exits the shell when either the exit or quit commands are called
     if( !(strcmp(token[0], "exit")) || !(strcmp(token[0], "quit")) )
       return (EXIT_SUCCESS);
+
+    if( !strcmp(token[0], "cd") )
+      chdir(token[1]);
+
+    pid_t pid = fork();
+    int exec;
+    if(pid == 0)
+    {
+      exec = execvp(token[0], &token[0]);
+
+      if(exec == -1)
+        printf("%s: Command not found.\n", token[0]);
+
+      exit( EXIT_SUCCESS );
+    }
+
+    if( pid != 0 )
+    {
+      int status;
+      waitpid(pid, &status, 0);
+    }
 
     free( working_root );
 
