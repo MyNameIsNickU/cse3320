@@ -152,7 +152,7 @@ int main()
 
 
     // Exits the shell when either the exit or quit commands are called
-    if( !(strcmp(token[0], "exit")) || !(strcmp(token[0], "quit")) )
+    if( !strcmp(token[0], "exit") || !strcmp(token[0], "quit") || !strcmp(token[0], "q" ) )
       return (EXIT_SUCCESS);
 
 
