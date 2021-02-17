@@ -46,7 +46,7 @@ ID:   1001745062
 #define MAX_NUM_ARGUMENTS 5     // Mav shell only supports five arguments
 
 #define MAX_PROCESSES_SHOWN 15 // Restraint for listpids()
-#define MAX_COMMANDS_SHOWN 15 // Restraint for 'history'
+#define MAX_COMMANDS_SHOWN 3 // Restraint for 'history'
 
 int main()
 {
@@ -110,27 +110,38 @@ int main()
     if( token[0] == NULL )
       continue;
 
+
+    /*
+    /  array for 'history' command.
+    /  copies from token and puts into history array
+    /  If the max number of commands has been reached,
+    /    shifts array left one and continues to override last spot.
+    /  This function keeps the com_num below its max.
+   */
     char * com_arr[MAX_COMMANDS_SHOWN];
-    com_arr[com_num++] = strdup( token[0] );
-
-    if( com_num >= MAX_COMMANDS_SHOWN)
+    if( com_num >= MAX_COMMANDS_SHOWN )
     {
-      com_num = 0;
-      com_max = 1;
-    }
+      for(int i = 0; i < com_num - 1; i++)
+      {
+        free( com_arr[i] );
+        com_arr[i] =  strdup( com_arr[i+1] );
+      }
 
+      free( com_arr[ com_num - 1 ] );
+      com_arr[com_num] = strdup( token[0] );
+    }
+    else
+      com_arr[com_num++] = strdup( token[0] );
+
+    // When 'history' command used, prints out the counted number of commands.
     if( !strcmp( token[0], "history" ) )
     {
-      if( com_max == 0 )
-        for(int i = 0; i < com_num; i++)
-          printf("[%d]: %s\n", i, com_arr[i]);
-
-      else
-        for(int i = 0; i < MAX_COMMANDS_SHOWN; i++)
-          printf("[%d]: %s\n", i, com_arr[i]);
-
+      for(int i = 0; i < com_num; i++)
+        printf("[%d]: %s\n", i, com_arr[i]);
       continue;
     }
+
+
     // Now print the tokenized input as a debug check
     // \TODO Remove this code and replace with your shell functionality
 
