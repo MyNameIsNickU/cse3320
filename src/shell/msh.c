@@ -57,10 +57,6 @@ int main()
   // Delcared outside of while() to prevent reseting of value.
   int pid_num = 0;
 
-  // If max processes shown, activate this bool.
-  // Allows overwriting while still printing all ids.
-  int pid_max = 0;
-
   // Counts commands inputted for 'history'
   int com_num = 0;
 
@@ -133,7 +129,7 @@ int main()
       com_arr[com_num++] = strdup( token[0] );
 
     // When 'history' command used, prints out the counted number of commands.
-    if( !strcmp( token[0], "history" ) )
+    if( !strcmp( token[0], "history") )
     {
       for(int i = 0; i < com_num; i++)
         printf("[%d]: %s\n", i, com_arr[i]);
@@ -167,20 +163,15 @@ int main()
       continue;
     }
 
+
     pid_t pid_arr[MAX_PROCESSES_SHOWN];
 
     if( !strcmp(token[0], "listpids") )
     {
-      if( pid_max == 0 )
-        for(int i = 0; i < pid_num; i++)
-          printf("%d: %d\n", i, pid_arr[i]);
-
-      else
-        for(int i = 0; i < MAX_PROCESSES_SHOWN; i++)
-          printf("%d: %d\n", i, pid_arr[i]);
+      for(int i = 0; i < pid_num; i++)
+        printf("%d: %d\n", i, pid_arr[i]);
       continue;
     }
-
 
     /*
     /  If command doesn't need special handling, forks the process and CHILD execs.
@@ -190,17 +181,36 @@ int main()
    */
     pid_t pid = fork();
 
-    // Recently created process id goes into array for listpids()
-    pid_arr[pid_num++] = pid;
-
-    // When max pid_arr size reached, resets counter to begin overwriting ids.
-    if( pid_num >= MAX_PROCESSES_SHOWN )
+    /*
+    /  If the max listpid limit hasn't been reached...
+    /  ...put the recently created pid into the array.
+    /
+    /  Once limit has been reached, shift array over to left...
+    /  ...and replace the right most value.
+   */
+    if( pid != 0 )
     {
-      pid_num = 0;
-      pid_max = 1;
+      if( pid_num >= MAX_PROCESSES_SHOWN )
+      {
+        for(int i = 0; i < pid_num - 1; i++)
+        {
+          pid_arr[i] = pid_arr[i+1];
+        }
+        pid_arr[pid_num-1] = pid;
+      }
+      else
+      {
+        pid_arr[pid_num++] = pid;
+      }
     }
 
+
     int exec; // For error handling
+    /*
+    /  Goes into child process and attempts to execute given command.
+    /  Prints out error message if failure.
+    /  Exits the child process.
+   */
     if(pid == 0)
     {
       exec = execvp(token[0], &token[0]);
@@ -211,6 +221,8 @@ int main()
       exit( EXIT_SUCCESS );
     }
 
+
+    // Parent process waits for child to complete its execution.
     if( pid != 0 )
     {
       int status;
