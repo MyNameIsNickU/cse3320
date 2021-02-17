@@ -46,7 +46,7 @@ ID:   1001745062
 #define MAX_NUM_ARGUMENTS 5     // Mav shell only supports five arguments
 
 #define MAX_PROCESSES_SHOWN 15 // Restraint for listpids()
-#define MAX_COMMANDS_SHOWN 3 // Restraint for 'history'
+#define MAX_COMMANDS_SHOWN 16 // Restraint for 'history'
 
 int main()
 {
@@ -63,7 +63,6 @@ int main()
 
   // Counts commands inputted for 'history'
   int com_num = 0;
-  int com_max = 0;
 
   while( 1 )
   {
