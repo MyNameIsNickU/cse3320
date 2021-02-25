@@ -46,7 +46,7 @@ ID:   1001745062
 #define MAX_NUM_ARGUMENTS 5     // Mav shell only supports five arguments
 
 #define MAX_PROCESSES_SHOWN 15 // Restraint for listpids()
-#define MAX_COMMANDS_SHOWN 16 // Restraint for 'history'
+#define MAX_COMMANDS_SHOWN 5 // Restraint for 'history'
 
 int main()
 {
@@ -125,12 +125,12 @@ int main()
 
       free( com_arr[ com_num - 1 ] );
       com_arr[com_num] = malloc( sizeof( token ) );
-      memcpy(com_arr[com_num++], &token, sizeof(token) );
+      memcpy(com_arr[com_num++], token, sizeof(token) );
     }
     else
     {
       com_arr[com_num] = malloc( sizeof( token ) );
-      memcpy(com_arr[com_num++], &token, sizeof(token) );
+      memcpy(com_arr[com_num++], token, sizeof(token) );
     }
 
     // When 'history' command used, prints out the counted number of commands.
