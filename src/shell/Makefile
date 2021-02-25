@@ -1,4 +1,4 @@
-CCFLAGS = --std=c99
+CCFLAGS = -Wall --std=c99
 
 default: shell
 
