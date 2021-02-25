@@ -60,6 +60,12 @@ int main()
   // Counts commands inputted for 'history'
   int com_num = 0;
 
+
+  // Command array for the history command.
+  char* com_arr[MAX_COMMAND_SIZE];
+  for(int i = 0; i < MAX_COMMAND_SIZE; i++)
+    com_arr[i] = (char*)malloc(255);
+
   while( 1 )
   {
     // Print out the msh prompt
@@ -81,6 +87,20 @@ int main()
     char *argument_ptr;
 
     char *working_str  = strdup( cmd_str );
+
+    strncpy(com_arr[com_num++], cmd_str, 255);
+    if( strtok( com_arr[com_num-1], "\n" ) );
+
+    if(com_num >= MAX_COMMAND_SIZE)
+      com_num = 0;
+
+    if( cmd_str[0] == '!' )
+    {
+      int repeatIndex = atoi( &cmd_str[1] );
+      char * repeatCom = com_arr[repeatIndex];
+      free (working_str);
+      working_str = strdup(repeatCom);
+    }
 
     // we are going to move the working_str pointer so
     // keep track of its original value so we can deallocate
@@ -113,26 +133,25 @@ int main()
     /    shifts array left one and continues to override last spot.
     /  This function keeps the com_num below its max.
    */
-    char * com_arr[MAX_COMMANDS_SHOWN];
-    if( com_num >= MAX_COMMANDS_SHOWN )
-    {
-      for(int i = 0; i < com_num - 1; i++)
-      {
-        free( com_arr[i] );
-        com_arr[i] =  strdup( com_arr[i+1] );
-      }
-
-      free( com_arr[ com_num - 1 ] );
-      com_arr[com_num] = strdup( token[0] );
-    }
-    else
-      com_arr[com_num++] = strdup( token[0] );
 
     // When 'history' command used, prints out the counted number of commands.
     if( !strcmp( token[0], "history") )
     {
-      for(int i = 0; i < com_num; i++)
-        printf("[%d]: %s\n", i, com_arr[i]);
+      int index = com_num;
+      if(com_num >= MAX_COMMANDS_SHOWN)
+        for(int i = 0; i < MAX_COMMANDS_SHOWN; i++)
+        {
+          printf("[%d]: %s", i, com_arr[index++]);
+          if(index >= MAX_COMMANDS_SHOWN)
+            index = 0;
+        }
+      else
+        for(int i = 0; i < com_num; i++)
+        {
+          printf("[%d]: %s", i, com_arr[index++] );
+          if(index >= MAX_COMMANDS_SHOWN)
+          index = 0;
+        }
       continue;
     }
 
