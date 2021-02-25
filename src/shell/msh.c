@@ -113,26 +113,31 @@ int main()
     /    shifts array left one and continues to override last spot.
     /  This function keeps the com_num below its max.
    */
-    char * com_arr[MAX_COMMANDS_SHOWN];
+    char ** com_arr[MAX_COMMANDS_SHOWN];
     if( com_num >= MAX_COMMANDS_SHOWN )
     {
       for(int i = 0; i < com_num - 1; i++)
       {
         free( com_arr[i] );
-        com_arr[i] =  strdup( com_arr[i+1] );
+        com_arr[i] = malloc( sizeof( com_arr[i+1] ) );
+        com_arr[i] = com_arr[i+1];
       }
 
       free( com_arr[ com_num - 1 ] );
-      com_arr[com_num] = strdup( token[0] );
+      com_arr[com_num] = malloc( sizeof( token ) );
+      com_arr[com_num] = ( token );
     }
     else
-      com_arr[com_num++] = strdup( token[0] );
+    {
+      com_arr[com_num] = malloc( sizeof( token ) );
+      com_arr[com_num++] = token;
+    }
 
     // When 'history' command used, prints out the counted number of commands.
     if( !strcmp( token[0], "history") )
     {
       for(int i = 0; i < com_num; i++)
-        printf("[%d]: %s\n", i, com_arr[i]);
+        printf("[%d]: %s\n", i, *com_arr[i]);
       continue;
     }
 
