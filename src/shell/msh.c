@@ -46,7 +46,7 @@ ID:   1001745062
 #define MAX_NUM_ARGUMENTS 5     // Mav shell only supports five arguments
 
 #define MAX_PROCESSES_SHOWN 15 // Restraint for listpids()
-#define MAX_COMMANDS_SHOWN 16 // Restraint for 'history'
+#define MAX_COMMANDS_SHOWN 5 // Restraint for 'history'
 
 int main()
 {
@@ -57,9 +57,14 @@ int main()
   // Delcared outside of while() to prevent reseting of value.
   int pid_num = 0;
 
-  // Counts commands inputted for 'history'
+  /* Counts commands inputted for 'history'
+  /  Will be reset once it hits MAX
+ */
   int com_num = 0;
 
+  /* Bool triggered when commands entered hit 'history' max!
+ */
+  int com_max = 0;
 
   // Command array for the history command.
   char* com_arr[MAX_COMMAND_SIZE];
@@ -91,9 +96,17 @@ int main()
     strncpy(com_arr[com_num++], cmd_str, 255);
     if( strtok( com_arr[com_num-1], "\n" ) );
 
-    if(com_num >= MAX_COMMAND_SIZE)
+    if(com_num >= MAX_COMMANDS_SHOWN)
+    {
       com_num = 0;
+      com_max = 1;
+    }
 
+    /*  Bang used with history command.
+    /   Executes given previous command in history com_arr[]
+    /   Replaces working_str with the desired repeated command.
+    /   Acts like the user typed in the command.
+   */
     if( cmd_str[0] == '!' )
     {
       int repeatIndex = atoi( &cmd_str[1] );
@@ -138,19 +151,17 @@ int main()
     if( !strcmp( token[0], "history") )
     {
       int index = com_num;
-      if(com_num >= MAX_COMMANDS_SHOWN)
+      if(com_max)
         for(int i = 0; i < MAX_COMMANDS_SHOWN; i++)
         {
-          printf("[%d]: %s", i, com_arr[index++]);
+          printf("[%d]: %s\n", i, com_arr[index++]);
           if(index >= MAX_COMMANDS_SHOWN)
             index = 0;
         }
       else
         for(int i = 0; i < com_num; i++)
         {
-          printf("[%d]: %s", i, com_arr[index++] );
-          if(index >= MAX_COMMANDS_SHOWN)
-          index = 0;
+          printf("[%d]: %s\n", i, com_arr[i] );
         }
       continue;
     }
@@ -158,13 +169,13 @@ int main()
 
     // Now print the tokenized input as a debug check
     // \TODO Remove this code and replace with your shell functionality
-
+    /*
     int token_index  = 0;
     for( token_index = 0; token_index < token_count; token_index ++ ) 
     {
       printf("token[%d] = %s\n", token_index, token[token_index] );  
     }
-
+    */
 
     // Exits the shell when either the exit or quit commands are called
     if( !strcmp(token[0], "exit") || !strcmp(token[0], "quit") || !strcmp(token[0], "q" ) )
@@ -254,4 +265,3 @@ int main()
   }
   return 0;
 }
-
