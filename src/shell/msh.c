@@ -125,19 +125,24 @@ int main()
 
       free( com_arr[ com_num - 1 ] );
       com_arr[com_num] = malloc( sizeof( token ) );
-      com_arr[com_num] = ( token );
+      memcpy(com_arr[com_num++], &token, sizeof(token) );
     }
     else
     {
       com_arr[com_num] = malloc( sizeof( token ) );
-      com_arr[com_num++] = token;
+      memcpy(com_arr[com_num++], &token, sizeof(token) );
     }
 
     // When 'history' command used, prints out the counted number of commands.
     if( !strcmp( token[0], "history") )
     {
       for(int i = 0; i < com_num; i++)
-        printf("[%d]: %s\n", i, *com_arr[i]);
+      {
+        printf("[%d]: ", i);
+        for(int j = 0; com_arr[i][j] != NULL; j++)
+          printf("%s ", com_arr[i][j]);
+        printf("\n");
+      }
       continue;
     }
 
