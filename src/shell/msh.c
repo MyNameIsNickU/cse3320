@@ -68,6 +68,8 @@ int main()
 
   // Command array for the history command.
   char* com_arr[MAX_COMMAND_SIZE];
+
+  // Allocates 255 chars for use in history commands.
   for(int i = 0; i < MAX_COMMAND_SIZE; i++)
     com_arr[i] = (char*)malloc(255);
 
@@ -93,9 +95,17 @@ int main()
 
     char *working_str  = strdup( cmd_str );
 
+    /*
+    /  Stores command PRE-TOKEN in the history array.
+    /  Removes newline for ease of printing out later.
+   */
     strncpy(com_arr[com_num++], cmd_str, 255);
     if( strtok( com_arr[com_num-1], "\n" ) );
 
+
+    /* Loops around array if max reached to overwrite values.
+    / Triggers bool once max is reached for history printing.
+   */
     if(com_num >= MAX_COMMANDS_SHOWN)
     {
       com_num = 0;
@@ -106,10 +116,18 @@ int main()
     /   Executes given previous command in history com_arr[]
     /   Replaces working_str with the desired repeated command.
     /   Acts like the user typed in the command.
+    /
+    /   Checks for invalid input by checking how many commands have been entered...
+    /   ...knows all indeces valid if com_max true
    */
     if( cmd_str[0] == '!' )
     {
       int repeatIndex = atoi( &cmd_str[1] );
+      if(repeatIndex < com_num || com_max == 1)
+      {
+        printf("Command not in history.\n");
+        continue;
+      }
       char * repeatCom = com_arr[repeatIndex];
       free (working_str);
       working_str = strdup(repeatCom);
@@ -136,18 +154,14 @@ int main()
     // Handles empty input so program doesn't seg fault.
     // Restarts the loop when empty.
     if( token[0] == NULL )
-      continue;
+      continue; 
 
 
-    /*
-    /  array for 'history' command.
-    /  copies from token and puts into history array
-    /  If the max number of commands has been reached,
-    /    shifts array left one and continues to override last spot.
-    /  This function keeps the com_num below its max.
+    /*                      ||||||| H I S T O R Y |||||||
+    /  If max commands NOT reached, prints out command array normally.
+    /  If max commands REACHED, stores offset in index to give impression of overwriting circling history...
+    /  ...as the com_arr is overwritten once max is reached.
    */
-
-    // When 'history' command used, prints out the counted number of commands.
     if( !strcmp( token[0], "history") )
     {
       int index = com_num;
@@ -166,18 +180,7 @@ int main()
       continue;
     }
 
-
-    // Now print the tokenized input as a debug check
-    // \TODO Remove this code and replace with your shell functionality
-    /*
-    int token_index  = 0;
-    for( token_index = 0; token_index < token_count; token_index ++ ) 
-    {
-      printf("token[%d] = %s\n", token_index, token[token_index] );  
-    }
-    */
-
-    // Exits the shell when either the exit or quit commands are called
+    // Exits the shell when either the exit or quit called ('q' shortcut for really lazy people)
     if( !strcmp(token[0], "exit") || !strcmp(token[0], "quit") || !strcmp(token[0], "q" ) )
       return (EXIT_SUCCESS);
 
@@ -193,7 +196,9 @@ int main()
       continue;
     }
 
-
+    /* ||||| L I S T  P I D S |||||
+    /  Lists out the array of pid ID's from the forked procceses.
+   */
     pid_t pid_arr[MAX_PROCESSES_SHOWN];
 
     if( !strcmp(token[0], "listpids") )
@@ -205,7 +210,7 @@ int main()
 
     /*
     /  If command doesn't need special handling, forks the process and CHILD execs.
-    /  If the command isn't found, error message prints 
+    /  If the command isn't found, error message prints
     /  Parent process waits for child to finish execution.
     /  Continues shell once child is complete.
    */
