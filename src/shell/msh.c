@@ -66,6 +66,10 @@ int main()
  */
   int com_max = 0;
 
+  /* For offset count to fix ! offset bug.
+ */
+  int com_count = 0;
+
   // Command array for the history command.
   char* com_arr[MAX_COMMAND_SIZE];
 
@@ -95,6 +99,13 @@ int main()
 
     char *working_str  = strdup( cmd_str );
 
+    // Handles empty input so program doesn't seg fault.
+    // Restarts the loop when empty.
+    if( *cmd_str == '\n' )
+      continue;
+    else
+      com_count++;
+
     /*
     /  Stores command PRE-TOKEN in the history array.
     /  Removes newline for ease of printing out later.
@@ -123,7 +134,14 @@ int main()
     if( cmd_str[0] == '!' )
     {
       int repeatIndex = atoi( &cmd_str[1] );
-      if(repeatIndex < com_num || com_max == 1)
+
+      // Fixes the offset due to how history commands circles around the array to print.
+      if(com_max)
+      {
+        repeatIndex += com_count - 1;
+        repeatIndex = repeatIndex % MAX_COMMANDS_SHOWN;
+      }
+      if(repeatIndex >= MAX_COMMANDS_SHOWN || (repeatIndex >= com_num && com_max != 1) )
       {
         printf("Command not in history.\n");
         continue;
@@ -149,13 +167,6 @@ int main()
       }
         token_count++;
     }
-
-
-    // Handles empty input so program doesn't seg fault.
-    // Restarts the loop when empty.
-    if( token[0] == NULL )
-      continue; 
-
 
     /*                      ||||||| H I S T O R Y |||||||
     /  If max commands NOT reached, prints out command array normally.
