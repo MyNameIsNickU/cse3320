@@ -5,11 +5,14 @@
 #include <sys/time.h>
 
 #define MAX 5000000
-#define NUM_THREADS 5
+#define NUM_THREADS 4
 
 int total = 0;
-int n1,n2; 
+int n1,n2;
 char *s1,*s2;
+int divisions;
+
+pthread_mutex_t mutex;
 
 FILE *fp;
 
@@ -20,30 +23,30 @@ int readf(char* filename)
         printf("ERROR: can’t open %s!\n", filename);
         return 0;
     }
-    
+
     s1=(char *)malloc(sizeof(char)*MAX);
-    
+
     if (s1==NULL)
     {
         printf ("ERROR: Out of memory!\n") ;
         return -1;
     }
-    
+
     s2=(char *)malloc(sizeof(char)*MAX);
-    
+
     if (s1==NULL)
     {
         printf ("ERROR: Out of memory\n") ;
         return -1;
     }
-    
+
     /*read s1 s2 from the file*/
-    
+
     s1=fgets(s1, MAX, fp);
     s2=fgets(s2, MAX, fp);
     n1=strlen(s1); /*length of s1*/
     n2=strlen(s2)-1; /*length of s2*/
-    
+
     if( s1==NULL || s2==NULL || n1 < n2 ) /*when error exit*/
     {
         return -1;
@@ -54,9 +57,15 @@ int readf(char* filename)
 
 void * num_substring ( void * ptr )
 {
+    //pthread_mutex_lock( &mutex );
     int i,j,k;
-    int count ;
-    for (i = 0; i <= (n1-n2); i++)
+    int count;
+    int start, end;
+
+    start = *(int*)ptr;
+    end = start + divisions;
+
+    for (i = start; i <= end; i++)
     {
         count =0;
         for(j = i ,k = 0; k < n2; j++,k++)
@@ -73,12 +82,13 @@ void * num_substring ( void * ptr )
                 total++; /*find a substring in this step*/
          }
     }
+    //pthread_mutex_unlock( &mutex );
     return NULL;
 }
 
 int main(int argc, char *argv[])
 {
-    int count ;
+    int count;
 
     if( argc < 2 )
     {
@@ -88,29 +98,38 @@ int main(int argc, char *argv[])
     readf ( argv[1] ) ;
 
     struct timeval start, end;
-    float mtime; 
-    int secs, usecs;    
+    float mtime;
+    int secs, usecs;
 
     gettimeofday(&start, NULL);
 
 
-    pthread_t substring_thread;
+    pthread_t substring_thread[NUM_THREADS];
 
+    divisions = n1/NUM_THREADS;
+    int thread_start;
 
-    if( pthread_create(&substring_thread, NULL, num_substring, NULL) )
+    int i ;
+    for(i = 0; i < NUM_THREADS; i++)
     {
-      perror("Thread creation error: ");
-      exit( EXIT_FAILURE );
+      thread_start = divisions * i;
+      if( pthread_create(&substring_thread[i], NULL, num_substring, (void*) &thread_start ) )
+      {
+        perror("Thread creation error: ");
+        exit( EXIT_FAILURE );
+      }
     }
 
-
-    if( pthread_join(substring_thread, NULL) )
+    for(i = 0; i < NUM_THREADS; i++)
     {
-      perror("Thread join error: ");
+      if( pthread_join(substring_thread[i], NULL) )
+      {
+        perror("Thread join error: ");
+      }
     }
 
     //count = num_substring () ;
-    count = -1;
+    count = total;
 
     gettimeofday(&end, NULL);
 
@@ -131,5 +150,5 @@ int main(int argc, char *argv[])
       free( s2 );
     }
 
-    return 0 ; 
+    return 0;
 }
