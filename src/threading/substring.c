@@ -104,6 +104,11 @@ int main(int argc, char *argv[])
     }
 
 
+    if( pthread_join(substring_thread, NULL) )
+    {
+      perror("Thread join error: ");
+    }
+
     //count = num_substring () ;
     count = -1;
 
