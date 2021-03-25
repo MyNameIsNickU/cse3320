@@ -5,7 +5,7 @@
 #include <sys/time.h>
 
 #define MAX 5000000
-#define NUM_THREADS 5
+#define NUM_THREADS 4
 
 int total = 0;
 int n1,n2;
@@ -85,7 +85,9 @@ void * num_substring ( void * ptr )
 
             if (count==n2)
             {
+              pthread_mutex_lock( &mutex );
               total++; /*find a substring in this step*/
+              pthread_mutex_unlock( &mutex );
             }
          }
     }
