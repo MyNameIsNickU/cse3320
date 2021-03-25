@@ -5,7 +5,7 @@
 #include <sys/time.h>
 
 #define MAX 5000000
-#define NUM_THREADS 3
+#define NUM_THREADS 5
 
 int total = 0;
 int n1,n2;
@@ -71,7 +71,7 @@ void * num_substring ( void * ptr )
         count =0;
         for(j = i ,k = 0; k < n2; j++,k++)
         { /*search for the next string of size of n2*/
-            if (*(s1+j)!=*(s2+k))
+            if ( *(s1+j) != *(s2+k) )
             {
                 break ;
             }
@@ -79,6 +79,10 @@ void * num_substring ( void * ptr )
             {
                 count++;
             }
+
+            if (count > 1 && (end - j < n2) )
+              end++;
+
             if (count==n2)
             {
               total++; /*find a substring in this step*/
