@@ -5,14 +5,14 @@
 #include <sys/time.h>
 
 #define MAX 5000000
-#define NUM_THREADS 4
+#define NUM_THREADS 10
 
 int total = 0;
 int n1,n2;
 char *s1,*s2;
-int divisions;
+int divisions; // Integer for how much data each thread checks
 
-pthread_mutex_t mutex;
+pthread_mutex_t mutex; // For locking the 'total' global variable
 
 FILE *fp;
 
@@ -64,8 +64,6 @@ void * num_substring ( void * ptr )
     start = *(int*)ptr;
     end = start + divisions;
 
-    printf("Searching... start: %d\tend: %d\n", start, end);
-
     for (i = start; i <= end; i++)
     {
         count =0;
@@ -112,6 +110,16 @@ int main(int argc, char *argv[])
     gettimeofday(&start, NULL);
 
 
+    /*
+    /  Seperate thread id for each thread needed in the program.
+    /  Amount of data each thread checks stored in 'divisions'.
+    /  The starting point of string for each thread is stored in an array for passing later.
+    /  Create(s) threads of specified number and passes in the starting position (as void pointer)...
+    /  ...Executes substring algorithm. Adds successes to the total global variable (mutexed).
+    /
+    /  Each thread is joined back together after execution.
+    /  Time elapsed is printed out along with number of substrings found.
+   */
     pthread_t substring_thread[NUM_THREADS];
 
     divisions = n1/NUM_THREADS;
@@ -137,7 +145,6 @@ int main(int argc, char *argv[])
       }
     }
 
-    //count = num_substring () ;
     count = total;
 
     gettimeofday(&end, NULL);
