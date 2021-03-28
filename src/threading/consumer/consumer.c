@@ -8,9 +8,10 @@
 sem_t waitQueue, printedQueue;
 
 char fileQueue[QUEUE_SIZE];
-int spot = 0;
 
 FILE *fp;
+
+
 
 int readf( char * filename )
 {
@@ -22,21 +23,30 @@ int readf( char * filename )
   return 0;
 }
 
+// 'Produces' the wait queue by adding chars into the circular queue. Relies on the number of processed chars.
 void * Producer( void * arg )
 {
   printf("Producer created!\n");
 
+  int spot = 0;
   char c;
 
+  /*
+  /  For the initial waitQueue to start the alternation
+ *
   if( (c = fgetc( fp )) == '\0')
     exit( EXIT_FAILURE );
   else
   {
     fileQueue[spot++] = c;
-    //sem_post( &waitQueue );
   }
+  */
 
-
+  /*
+  /  Until the file reaches its end, it will add each char of the file to the circ. QUEUE.
+  /  Increments the waiting char sem.
+  /  If printed (processed) char sem. is 0, it will wait until more finish being processed.
+ */
   while( feof( fp ) == 0 )
   {
     c = fgetc( fp );
@@ -53,6 +63,7 @@ void * Producer( void * arg )
   return NULL;
 }
 
+// 'Consumes' the chars in the wait circular queue by printing them. Relies on number of chars waiting to be processed.
 void * Consumer( void * arg )
 {
   printf("Consumer created!\n");
@@ -60,6 +71,11 @@ void * Consumer( void * arg )
   char printChar = 'a';
   int printSpot = 0;
 
+  /*
+  /  Until the file reaches its end, print out char in the circular queue...
+  /  Increments printedQueue sem. each time char processed.
+  /  If waiting chars are 0, it will wait until it is given more chars to process.
+ */
   while( feof( fp ) == 0 )
   {
     sem_wait( &waitQueue );
@@ -69,7 +85,6 @@ void * Consumer( void * arg )
       printSpot = 0;
 
     sem_post( &printedQueue );
-    //fflush(stdin);
     printf("%c", printChar);
   }
   printf("Consumer returning!\n");
@@ -89,8 +104,8 @@ int main( int argc, char * argv[] )
 
   readf( argv[1] );
 
-  sem_init( &printedQueue, 1, 0);
-  sem_init( &waitQueue, 1, 1);
+  sem_init( &printedQueue, 1, 1);
+  sem_init( &waitQueue, 1, 0);
 
   pthread_create( &producer_tid, NULL, Producer, NULL);
   pthread_create( &consumer_tid, NULL, Consumer, NULL);
