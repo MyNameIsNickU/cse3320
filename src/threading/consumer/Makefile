@@ -1,15 +1,15 @@
 CCFLAGS = -Wall --std=c99 -lpthread
 
-default: consumer
+default: queue
 
 debug: CCFLAGS += -g
-debug: consumer
+debug: queue
 
-consumer: consumer.c
-	gcc -o consumer consumer.c $(CCFLAGS)
+queue: consumer.c
+	gcc -o queue consumer.c $(CCFLAGS)
 
-rebuild: clean consumer
+rebuild: clean queue
 
 
 clean:
-	rm -f a.out consumer *.o
+	rm -f a.out queue *.o

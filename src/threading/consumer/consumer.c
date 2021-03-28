@@ -33,26 +33,46 @@
 #include <stdlib.h>
 
 #define INITIAL_CUSTOMERS 1
-#define NUM_CASHIERS 5
+#define NUM_CASHIERS 15
 #define NONSHARED 1
 
 sem_t customer_checked_out, customers_in_line;    
 int customers_waiting = INITIAL_CUSTOMERS ;            
 
+char fileQueue[NUM_CASHIERS];
+int spot = 0;
+
+FILE *fp;
+
+int readf( char * filename )
+{
+  if( (fp = fopen( filename, "r" )) == NULL )
+  {
+    printf("Cannot open file: %s | EXITING!", filename);
+    exit( EXIT_FAILURE );
+  }
+  return 0;
+}
+
+
 void * CustomerProducer( void * arg ) 
 {
   printf( "CustomerProducer created\n" );
 
-  while( 1 )
+  char c;
+
+  while( (c = fgetc( fp )) )
   {
     // Only produce a new customer if we check out an exiting customer
     sem_wait( &customer_checked_out );
 
+    /*
     int new_customers = rand( ) % 10; 
     customers_waiting += new_customers; 
 
     printf( "Adding %d customers to the line\n", new_customers ); 
     printf( "%d customer waiting in line\n", customers_waiting );
+
 
     // Notify the cashiers that we've added a new customer to the lineA
     int i;
@@ -60,9 +80,16 @@ void * CustomerProducer( void * arg )
     {
       sem_post( &customers_in_line );
     }
+    */
+
+    fileQueue[spot++] = c;
+    sem_post( &customers_in_line );
+
+    if( spot == NUM_CASHIERS )
+      spot = 0;
 
     // Sleep a little bit so we can read the output on the screen
-    sleep( 2 );
+    //sleep( 2 );
 
   }
 }
@@ -88,7 +115,7 @@ void * Cashier( void * arg )
     sem_post( &customer_checked_out );
 
     // Sleep a little bit so we can read the output on the screen
-    sleep( 1 );
+    //sleep( 1 );
   }
 
 }
@@ -97,7 +124,7 @@ int main( int argc, char *argv[] )
 {
   time_t t;
 
-  srand( ( unsigned int ) time( & t ) );
+  //srand( ( unsigned int ) time( & t ) );
 
   pthread_t producer_tid;  
   pthread_t cashier_tid [ NUM_CASHIERS ];  
