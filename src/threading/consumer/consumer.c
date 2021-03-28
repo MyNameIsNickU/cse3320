@@ -33,7 +33,7 @@ void * Producer( void * arg )
   else
   {
     fileQueue[spot++] = c;
-    sem_post( &waitQueue );
+    //sem_post( &waitQueue );
   }
 
 
@@ -57,12 +57,16 @@ void * Consumer( void * arg )
 
   char printChar = 'a';
   int printSpot = 0;
+  int fileStatus;
 
-  while( printChar != '\0' )
+  while( feof( fp ) == 0 )
   {
     sem_wait( &waitQueue );
 
     printChar = fileQueue[printSpot++];
+    if( printSpot == QUEUE_SIZE )
+      printSpot = 0;
+
     sem_post( &printedQueue );
     //fflush(stdin);
     printf("%c", printChar);
