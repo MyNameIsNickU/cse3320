@@ -37,8 +37,9 @@ void * Producer( void * arg )
   }
 
 
-  while( (c = fgetc( fp )) )
+  while( feof( fp ) == 0 )
   {
+    c = fgetc( fp );
     sem_wait( &printedQueue );
 
 
@@ -48,6 +49,7 @@ void * Producer( void * arg )
     if( spot == QUEUE_SIZE )
       spot = 0;
   }
+  printf("Producer returning!\n");
   return NULL;
 }
 
@@ -57,7 +59,6 @@ void * Consumer( void * arg )
 
   char printChar = 'a';
   int printSpot = 0;
-  int fileStatus;
 
   while( feof( fp ) == 0 )
   {
@@ -71,6 +72,7 @@ void * Consumer( void * arg )
     //fflush(stdin);
     printf("%c", printChar);
   }
+  printf("Consumer returning!\n");
   return NULL;
 }
 
