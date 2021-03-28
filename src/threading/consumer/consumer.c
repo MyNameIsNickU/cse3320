@@ -11,8 +11,6 @@ char fileQueue[QUEUE_SIZE];
 
 FILE *fp;
 
-
-
 int readf( char * filename )
 {
   if( (fp = fopen( filename, "r" )) == NULL)
@@ -26,21 +24,8 @@ int readf( char * filename )
 // 'Produces' the wait queue by adding chars into the circular queue. Relies on the number of processed chars.
 void * Producer( void * arg )
 {
-  printf("Producer created!\n");
-
   int spot = 0;
   char c;
-
-  /*
-  /  For the initial waitQueue to start the alternation
- *
-  if( (c = fgetc( fp )) == '\0')
-    exit( EXIT_FAILURE );
-  else
-  {
-    fileQueue[spot++] = c;
-  }
-  */
 
   /*
   /  Until the file reaches its end, it will add each char of the file to the circ. QUEUE.
@@ -52,31 +37,28 @@ void * Producer( void * arg )
     c = fgetc( fp );
     sem_wait( &printedQueue );
 
-
     fileQueue[spot++] = c;
     sem_post( &waitQueue );
 
     if( spot == QUEUE_SIZE )
       spot = 0;
   }
-  printf("Producer returning!\n");
   return NULL;
 }
 
 // 'Consumes' the chars in the wait circular queue by printing them. Relies on number of chars waiting to be processed.
 void * Consumer( void * arg )
 {
-  printf("Consumer created!\n");
-
   char printChar = 'a';
   int printSpot = 0;
+  int fileStatus = 0;
 
   /*
   /  Until the file reaches its end, print out char in the circular queue...
   /  Increments printedQueue sem. each time char processed.
   /  If waiting chars are 0, it will wait until it is given more chars to process.
  */
-  while( feof( fp ) == 0 )
+  while( !fileStatus )
   {
     sem_wait( &waitQueue );
 
@@ -86,8 +68,8 @@ void * Consumer( void * arg )
 
     sem_post( &printedQueue );
     printf("%c", printChar);
+    fileStatus = feof( fp );
   }
-  printf("Consumer returning!\n");
   return NULL;
 }
 
@@ -112,4 +94,6 @@ int main( int argc, char * argv[] )
 
   pthread_join( producer_tid, NULL);
   pthread_join( consumer_tid, NULL);
+
+  fclose( fp );
 }
