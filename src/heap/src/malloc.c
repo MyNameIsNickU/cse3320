@@ -10,15 +10,16 @@
 
 
 static int atexit_registered = 0;
-static int num_mallocs       = 0;
-static int num_frees         = 0;
+
+static int num_mallocs       = 0; // Implemented
+static int num_frees         = 0; // Implemented
 static int num_reuses        = 0;
-static int num_grows         = 0;
-static int num_splits        = 0;
-static int num_coalesces     = 0;
+static int num_grows         = 0; // Implemented
+//static int num_splits        = 0;
+//static int num_coalesces     = 0;
 static int num_blocks        = 0;
 static int num_requested     = 0;
-static int max_heap          = 0;
+static int max_heap          = 0; // Implemented
 
 /*
  *  \brief printStatistics
@@ -37,14 +38,14 @@ void printStatistics( void )
   printf("frees:\t\t%d\n", num_frees );
   printf("reuses:\t\t%d\n", num_reuses );
   printf("grows:\t\t%d\n", num_grows );
-  printf("splits:\t\t%d\n", num_splits );
-  printf("coalesces:\t%d\n", num_coalesces );
+  //printf("splits:\t\t%d\n", num_splits );
+  //printf("coalesces:\t%d\n", num_coalesces );
   printf("blocks:\t\t%d\n", num_blocks );
   printf("requested:\t%d\n", num_requested );
   printf("max heap:\t%d\n", max_heap );
 }
 
-struct _block 
+struct _block
 {
    size_t  size;         /* Size of the allocated _block of memory in bytes */
    struct _block *prev;  /* Pointer to the previous _block of allcated memory   */
@@ -60,7 +61,7 @@ struct _block *heapList = NULL; /* Free list to track the _blocks available */
  * \brief findFreeBlock
  *
  * \param last pointer to the linked list of free _blocks
- * \param size size of the _block needed in bytes 
+ * \param size size of the _block needed in bytes
  *
  * \return a _block that fits the request or NULL if no free _block matches
  *
@@ -68,21 +69,29 @@ struct _block *heapList = NULL; /* Free list to track the _blocks available */
  * \TODO Implement Best Fit
  * \TODO Implement Worst Fit
  */
-struct _block *findFreeBlock(struct _block **last, size_t size) 
+struct _block *findFreeBlock(struct _block **last, size_t size)
 {
    struct _block *curr = heapList;
 
 #if defined FIT && FIT == 0
    /* First fit */
-   while (curr && !(curr->free && curr->size >= size)) 
+
+   while (curr && !(curr->free && curr->size >= size))
    {
       *last = curr;
       curr  = curr->next;
    }
+
 #endif
 
 #if defined BEST && BEST == 0
-   printf("TODO: Implement best fit here\n");
+   // BEST FIT
+   int leftover = curr->size - size;
+   while (curr && !(curr->free && curr->size >= size))
+   {
+      *last = curr;
+      curr  = curr->next;
+   }
 #endif
 
 #if defined WORST && WORST == 0
@@ -121,6 +130,12 @@ struct _block *growHeap(struct _block *last, size_t size)
    {
       return NULL;
    }
+
+   // Update grow count
+   num_grows++;
+
+   // Update heap size
+   max_heap += sizeof(struct _block) + size;
 
    /* Update heapList if not set */
    if (heapList == NULL) 
