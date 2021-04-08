@@ -68,9 +68,6 @@ struct _block *lastUsed = NULL;
  *
  * \return a _block that fits the request or NULL if no free _block matches
  *
- * \TODO Implement Next Fit
- * \TODO Implement Best Fit
- * \TODO Implement Worst Fit
  */
 struct _block *findFreeBlock(struct _block **last, size_t size)
 {
