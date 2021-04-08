@@ -15,12 +15,16 @@ int main()
 
   free( ptr1 ); 
   free( ptr2 ); 
+  printf("Freed the first two pointers.\n");
 
   buffer1 = buffer1;
   buffer2 = buffer2;
   ptr4 = ptr4;
+  printf("Reassignments complete.\n");
 
   char * ptr3 = ( char * ) malloc ( 1000 );
+  if(ptr3 == NULL)
+    printf("ptr3 is null.\n");
   printf("Chosen address: %p\n", ptr3 );
 
   return 0;
