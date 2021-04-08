@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #define ALIGN4(s)         (((((s) - 1) >> 2) << 2) + 4)
 #define BLOCK_DATA(b)      ((b) + 1)
@@ -58,6 +59,7 @@ struct _block
 struct _block *heapList = NULL; /* Free list to track the _blocks available */
 struct _block *lastUsed = NULL;
 
+
 /*
  * \brief findFreeBlock
  *
@@ -86,16 +88,37 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
 
 #if defined BEST && BEST == 0
    // Best Fit
-   int leftover = curr->size - size;
-   while (curr && !(curr->free && curr->size >= size))
+   int leftoverBest = INT_MAX;
+   struct _block *best = NULL;
+
+   while (curr)
    {
+      if(curr->size - size < leftoverBest)
+      {
+        leftoverBest = curr->size - size;
+        best = curr;
+      }
       *last = curr;
       curr  = curr->next;
    }
+   curr = best;
 #endif
 
 #if defined WORST && WORST == 0
+   int leftoverWorst = INT_MIN;
+   struct _block *worst = NULL;
 
+   while (curr)
+   {
+      if(curr->size - size > leftoverWorst)
+      {
+        leftoverWorst = curr->size - size;
+        worst = curr;
+      }
+      *last = curr;
+      curr  = curr->next;
+   }
+   curr = worst;
 #endif
 
 #if defined NEXT && NEXT == 0
