@@ -12,7 +12,7 @@
 
 static int atexit_registered = 0;
 
-static int num_mallocs       = 0; // Implemented
+static int num_mallocs       = -1; // Implemented
 static int num_frees         = 0; // Implemented
 static int num_reuses        = 0;
 static int num_grows         = 0; // Implemented
@@ -181,6 +181,8 @@ struct _block *growHeap(struct _block *last, size_t size)
       last->next = curr;
    }
 
+   max_heap += size + sizeof(struct _block);
+
    /* Update _block metadata */
    curr->size = size;
    curr->next = NULL;
@@ -210,6 +212,7 @@ void *malloc(size_t size)
       atexit( printStatistics );
    }
 
+   num_requested += size;
    /* Align to multiple of 4 */
    size = ALIGN4(size);
 
@@ -218,6 +221,8 @@ void *malloc(size_t size)
    {
       return NULL;
    }
+
+   num_mallocs++;
 
    /* Look for free _block */
    struct _block *last = heapList;
@@ -236,15 +241,13 @@ void *malloc(size_t size)
    /* Could not find free _block or grow heap, so just return NULL */
    if (next == NULL) 
    {
+      num_grows--;
+      num_blocks--;
       return NULL;
    }
 
-   max_heap += size + sizeof(struct _block);
-
    /* Mark _block as in use */
    next->free = false;
-
-   num_mallocs++;
 
    /* Return data address associated with _block */
    return BLOCK_DATA(next);
@@ -273,6 +276,7 @@ void free(void *ptr)
    curr->free = true;
 
    num_frees++;
+   return;
 
    /* TODO: Coalesce free _blocks if needed */
 }
