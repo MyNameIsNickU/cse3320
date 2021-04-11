@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <string.h>
 
 #define ALIGN4(s)         (((((s) - 1) >> 2) << 2) + 4)
 #define BLOCK_DATA(b)      ((b) + 1)
@@ -84,7 +85,13 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
 #endif
 
 #if defined BEST && BEST == 0
-   // Best Fit
+   /* Best Fit
+   /
+   /  Start at the beginning of the heap and search the entire heap for the BEST fit.
+   /  The best fit is when the potential leftover size is the LEAST.
+   /  We loop through each block and check what the best leftover size is, and save that block pointer.
+   /
+  */
    int leftoverBest = INT_MAX;
    struct _block *best = NULL;
 
@@ -102,6 +109,13 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
 #endif
 
 #if defined WORST && WORST == 0
+   /* Worst Fit
+   /
+   /  Start at the beginning of the heap and search the entire heap for the WORST fit.
+   /  The best fit is when the potential leftover size is the GREATEST.
+   /  We loop through each block and check what the worst leftover size is, and save that block pointer.
+   /
+  */
    int leftoverWorst = 0;
    struct _block *worst = NULL;
 
@@ -119,7 +133,11 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
 #endif
 
 #if defined NEXT && NEXT == 0
-   // Next Fit
+   /*  Next Fit
+   /   The same as first fit except the previous pointer allocated is the starting point...
+   /   ...for the first fit search.
+   /   Global variable used for previously used pointer.
+  */
    if(lastUsed != NULL)
      curr = lastUsed;
    while (curr && !(curr->free && curr->size >= size))
@@ -130,9 +148,11 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
 
 #endif
 
+   // If a fit algorithm succeeded, then a reuse occured.
    if(curr != NULL)
      num_reuses++;
 
+   // Saves the last allocated pointer.
    lastUsed = curr;
    return curr;
 }
@@ -180,7 +200,7 @@ struct _block *growHeap(struct _block *last, size_t size)
 
    max_heap += size + sizeof(struct _block);
 
-   /* Update _block metadata */
+   /* Update _block metadata (INCLUDING NUMBER OF BLOCKS) */
    curr->size = size;
    curr->next = NULL;
    num_blocks++;
@@ -209,7 +229,9 @@ void *malloc(size_t size)
       atexit( printStatistics );
    }
 
+   // The requested size is the input size for the function call.
    num_requested += size;
+
    /* Align to multiple of 4 */
    size = ALIGN4(size);
 
@@ -219,6 +241,8 @@ void *malloc(size_t size)
       return NULL;
    }
 
+
+   // If the NULL checks have succeeded, then a malloc is going to occur.
    num_mallocs++;
 
    /* Look for free _block */
@@ -235,7 +259,9 @@ void *malloc(size_t size)
       next = growHeap(last, size);
    }
 
-   /* Could not find free _block or grow heap, so just return NULL */
+   /* Could not find free _block or grow heap, so just return NULL
+   /  Fixes the problem when growHeap is called and grow/block counters are always allocated.
+  */
    if (next == NULL) 
    {
       num_grows--;
@@ -248,6 +274,46 @@ void *malloc(size_t size)
 
    /* Return data address associated with _block */
    return BLOCK_DATA(next);
+}
+
+
+/*
+ * \brief realloc
+ *
+ * Takes a pointer to previously allocated memory and changes the size of allocated memory.
+ *
+ * \param ptr Pointer to previously allocated memory.
+ * \param size Desired size of the newly allocated memory.
+ *
+ * \return Returns the pointer to the newly allocated memory.
+ *
+ */
+void * realloc(void * ptr, size_t size)
+{
+  void * new_malloc = malloc(size);
+  memcpy(new_malloc, ptr, size);
+  free(ptr);
+  return new_malloc;
+}
+
+
+/*
+ * \brief calloc
+ *
+ * Similar to malloc, except allocated memory is also initialized to 0.
+ *
+ * \param nmemb Specified number of elements of memory allocated to be initalized.
+ * \param size Desired size of the allocated elements.
+ *
+ * \return Returns the pointer to the newly allocated memory (that is initialized).
+ *
+ */
+void * calloc(size_t nmemb, size_t size)
+{
+  void * ptr;
+  ptr = malloc( nmemb * size );
+  memset(ptr, '\0', nmemb * size);
+  return ptr;
 }
 
 /*
