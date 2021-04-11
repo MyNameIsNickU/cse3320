@@ -14,12 +14,12 @@ static int atexit_registered = 0;
 
 static int num_mallocs       = -1; // Implemented
 static int num_frees         = 0; // Implemented
-static int num_reuses        = 0;
+static int num_reuses        = 0; // Implemented
 static int num_grows         = 0; // Implemented
 //static int num_splits        = 0;
 //static int num_coalesces     = 0;
-static int num_blocks        = 0;
-static int num_requested     = 0;
+static int num_blocks        = 0; // Implemented
+static int num_requested     = 0; // Implemented
 static int max_heap          = 0; // Implemented
 
 /*
@@ -90,7 +90,7 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
 
    while (curr)
    {
-      if(curr->size - size < leftoverBest)
+      if(curr->size - size < leftoverBest && curr->size - size >= 0 && curr->free)
       {
         leftoverBest = curr->size - size;
         best = curr;
@@ -102,12 +102,12 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
 #endif
 
 #if defined WORST && WORST == 0
-   int leftoverWorst = INT_MIN;
+   int leftoverWorst = 0;
    struct _block *worst = NULL;
 
    while (curr)
    {
-      if(curr->size - size > leftoverWorst)
+      if(curr->size - size > leftoverWorst && curr->size - size >= 0 && curr->free)
       {
         leftoverWorst = curr->size - size;
         worst = curr;
