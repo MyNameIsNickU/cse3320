@@ -136,6 +136,8 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
    /*  Next Fit
    /   The same as first fit except the previous pointer allocated is the starting point...
    /   ...for the first fit search.
+   /   First loop starts from the last allocated pointer and goes to the end of the list.
+   /   If a spot was not found, start from the beginning of heap and go to the lastly allocated pointer.
    /   Global variable used for previously used pointer.
   */
    if(lastUsed != NULL)
@@ -144,6 +146,17 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
    {
       *last = curr;
       curr  = curr->next;
+   }
+
+   // Didn't find spot from previous to end.
+   if( curr == NULL )
+   {
+     curr = heapList;
+     while(curr != lastUsed && !(curr->free && curr->size >= size))
+     {
+       *last = curr;
+       curr = curr->next;
+     }
    }
 
 #endif
