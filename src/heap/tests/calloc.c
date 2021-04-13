@@ -1,17 +1,22 @@
-//#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
 int main()
 {
-  printf("Running test 1 to test a simple malloc and free\n");
+    int* array;
 
-  char * ptr = ( char * ) calloc ( 65535 , sizeof(char));
+    array = (int*)calloc(5, sizeof(int));
 
-  int i;
-  for(i = 0; i < 65534; i++)
-    printf("data = %c", ptr[i]);
+    assert( array[0] == 0 );
+    assert( array[1] == 0 );
+    assert( array[2] == 0 );
+    assert( array[3] == 0 );
+    assert( array[4] == 0 );
 
-  free( ptr ); 
+    printf("calloc test PASSED\n");
 
-  return 0;
+    free(array);
+
+    return (0);
 }
