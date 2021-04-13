@@ -40,6 +40,9 @@
 
 FILE *fp;
 
+ /*
+ /
+*/
 int fat_open( char * filename )
 {
   if( fp != NULL )
@@ -61,6 +64,23 @@ int fat_open( char * filename )
   }
 }
 
+ /*
+ /
+*/
+int fat_close()
+{
+  if( fp != NULL )
+  {
+    printf("Image closed successfully.\n");
+    fclose( fp );
+    return 1;
+  }
+  else
+  {
+    printf("Error: File system not open.\n");
+    return -1;
+  }
+}
 
 int main()
 {
@@ -108,7 +128,11 @@ int main()
     }
 
 
-
+    // Trying to use command when file system isn't open
+    if( fp == NULL && strcmp( token[0], "open" ) )
+    {
+      printf("Error: File system image must be opened first.\n");
+    }
 
     // Now print the tokenized input as a debug check
     // \TODO Remove this code and replace with your FAT32 functionality
@@ -119,13 +143,25 @@ int main()
       printf("token[%d] = %s\n", token_index, token[token_index] );
     }
 
-    free( working_root );
 
+    /*
+    /  OPEN THE FILE SYTEM = 'open'
+    /  Attempts to open the file system if the file pointer is empty.
+    /  If the file system is already open, pops an error.
+    /  If the file system CANNOT be opened, pops an error.
+   */
     if( !strcmp( token[0], "open" ) )
     {
       fat_open( token[1] );
     }
 
+    if( !strcmp( token[0], "close") )
+    {
+      fat_close();
+    }
+
+
+    free( working_root );
 
   }
   return 0;
