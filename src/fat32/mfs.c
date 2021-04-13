@@ -1,3 +1,9 @@
+/*
+Nicholas Untrecht
+1001745062
+CSE 3320 - Sec 003
+*/
+
 // The MIT License (MIT)
 //
 // Copyright (c) 2020 Trevor Bakker
