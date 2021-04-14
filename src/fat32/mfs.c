@@ -79,6 +79,7 @@ int fat_close()
   {
     printf("Image closed successfully.\n");
     fclose( fp );
+    fp = NULL;
     return 1;
   }
   else
@@ -88,6 +89,38 @@ int fat_close()
   }
 }
 
+char BS_OEMName[8];
+int16_t BPB_BytsPerSec;
+int8_t BPB_SecPerClus;
+int16_t BPB_RsvdSecCnt;
+int8_t BPB_NumFATs;
+int32_t BPB_FATSz32;
+
+ /*
+ /
+*/
+void fat_info()
+{
+  printf("---INFO---\n");
+
+
+  fseek( fp, 3, SEEK_SET);
+  fread( BS_OEMName, 8, 1, fp );
+  printf("BS_OEMName = %s\n", BS_OEMName);
+
+  fseek( fp, 11, SEEK_SET );
+  fread( &BPB_BytsPerSec, 2, 1, fp );
+  printf("BPB_BytsPerSec = %d\n", BPB_BytsPerSec);
+
+  fseek( fp, 13, SEEK_SET );
+  fread( &BPB_SecPerClus, 1, 1, fp );
+  printf("BPB_SecPerClus = %d\n", BPB_SecPerClus);
+
+  fseek( fp, 14, SEEK_SET );
+  fread( &BPB_RsvdSecCnt, 2, 1, fp );
+  printf("BPB_RsvdSecCnt = %d\n", BPB_RsvdSecCnt);
+  return;
+}
 int main()
 {
 
@@ -138,20 +171,11 @@ int main()
     if( fp == NULL && strcmp( token[0], "open" ) )
     {
       printf("Error: File system image must be opened first.\n");
+      continue;
     }
-
-    // Now print the tokenized input as a debug check
-    // \TODO Remove this code and replace with your FAT32 functionality
-
-    int token_index  = 0;
-    for( token_index = 0; token_index < token_count; token_index ++ )
-    {
-      printf("token[%d] = %s\n", token_index, token[token_index] );
-    }
-
 
     /*
-    /  OPEN THE FILE SYTEM = 'open'
+    /  OPEN THE FILE SYSTEM = 'open'
     /  Attempts to open the file system if the file pointer is empty.
     /  If the file system is already open, pops an error.
     /  If the file system CANNOT be opened, pops an error.
@@ -161,9 +185,24 @@ int main()
       fat_open( token[1] );
     }
 
+    /*
+    /  CLOSE THE FILE SYSTEM = 'close'
+    /  Attempts to close the file system if the file pointer is set to a value...
+    /  ...sets file pointer to NULL after closing
+    /  If the file system is already closed, pops an error.
+   */
     if( !strcmp( token[0], "close") )
     {
       fat_close();
+    }
+
+    /*
+    /  LIST IMAGE INFO = 'info'
+    /  description
+   */
+    if( !strcmp( token[0], "info") )
+    {
+      fat_info();
     }
 
 
