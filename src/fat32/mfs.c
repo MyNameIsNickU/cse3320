@@ -263,8 +263,13 @@ void fat_cd( char * folder )
 void fat_stat( char * filename )
 {
   int check = file2index( filename );
-  printf("Attribute\tSize\tCluster Number\n");
-  printf("%d\t\t%d\t\t%d\n", dir[check].DIR_Attr, dir[check].DIR_FileSize, dir[check].DIR_FirstClusterLow );
+  if( check == -1 )
+  {
+    printf("Error: File not found.\n");
+    return;
+  }
+  printf("Attribute\tSize\tStarting Cluster Number\n");
+  printf("%d\t\t%d\t%d\n", dir[check].DIR_Attr, dir[check].DIR_FileSize, dir[check].DIR_FirstClusterLow );
 
   return;
 }
