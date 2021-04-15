@@ -45,6 +45,7 @@ CSE 3320 - Sec 003
 #define MAX_COMMAND_SIZE 255    // The maximum command-line size
 
 
+int currPos = 0;
 FILE *fp;
 
 struct __attribute__((__packed__)) DirectoryEntry
@@ -66,6 +67,31 @@ int8_t BPB_SecPerClus;
 int16_t BPB_RsvdSecCnt;
 int8_t BPB_NumFATs;
 int32_t BPB_FATSz32;
+
+ /*
+ /  Function: LBA To Offset
+ /  Paramters: Current sector numbers - points to block of data
+ /  Returns: Value of address for that block of data
+*/
+int LBAToOffset( int32_t sector )
+{
+  return (( sector - 2 ) * BPB_BytsPerSec) + (BPB_BytsPerSec * BPB_RsvdSecCnt) + (BPB_NumFATs * BPB_FATSz32 * BPB_BytsPerSec);
+}
+
+ /*
+ /  Function: Next LB
+ /  Parameters: Current sector number
+ /  Description: Given block addr., look up in first FAT and return block addr. of block in file...
+ /  ...returns -1 if no further blocks.
+*/
+int16_t NextLB( uint32_t sector )
+{
+  uint32_t FATAddress = ( BPB_BytsPerSec * BPB_RsvdSecCnt ) + ( sector * 4 );
+  int16_t val;
+  fseek( fp, FATAddress, SEEK_SET );
+  fread( &val, 2, 1, fp );
+  return val;
+}
 
  /*
  /
@@ -145,7 +171,6 @@ void fat_infoList()
   return;
 }
 
-int currPos = 0;
 
  /*
  /
