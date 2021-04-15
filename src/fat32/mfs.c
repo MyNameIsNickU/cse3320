@@ -67,6 +67,7 @@ int8_t BPB_SecPerClus;
 int16_t BPB_RsvdSecCnt;
 int8_t BPB_NumFATs;
 int32_t BPB_FATSz32;
+int32_t ClusterSize;
 
  /*
  /  Function: LBA To Offset
@@ -112,6 +113,8 @@ void fat_InfoFill()
 
   fseek( fp, 36, SEEK_SET );
   fread( &BPB_FATSz32, 4, 1, fp );
+
+  ClusterSize = BPB_SecPerClus * BPB_BytsPerSec;
 
   return;
 }
@@ -211,6 +214,7 @@ void fat_cd( char * folder )
 {
   int check = 15;
   char filename[12];
+  int currClus, nextClus;
 
   while( check >= 0 )
   {
@@ -236,6 +240,12 @@ void fat_cd( char * folder )
     if( dir[check].DIR_Attr == 0x10 )
     {
       printf("Found subdirectory.\n");
+      currClus = dir[check].DIR_FirstClusterLow;
+      if( currClus == 0 )
+        currClus = 2;
+      nextClus = NextLB( currClus );
+      printf("Current Cluster To Go To: %d\nNext Cluster After: %d\n", currClus, nextClus);
+      currPos = LBAToOffset( currClus );
     }
     else
       printf("Error: File found but not subdirectory.\n");
