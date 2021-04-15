@@ -185,7 +185,6 @@ void fat_ls()
   if( currPos == 0 )
     currPos = start;
 
-  printf("Seeking to currPos = %d\n", currPos);
   fseek( fp, currPos, SEEK_SET );
   int i;
   for(i = 0; i < 16; i++)
@@ -196,11 +195,12 @@ void fat_ls()
   char filename[12];
   for(i = 0; i < 16; i++)
   {
-    if(dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20)
+    if( dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20 )
     {
       strncpy( filename, dir[i].DIR_Name, 11 );
       filename[11] = '\0';
-      printf("%s\n", filename);
+      if( !((filename[0] & 0x000000e5) == 0x000000e5) )
+        printf("%s\n", filename);
     }
   }
 
@@ -214,7 +214,7 @@ void fat_cd( char * folder )
 {
   int check = 15;
   char filename[12];
-  int currClus, nextClus;
+  int currClus;
 
   while( check >= 0 )
   {
@@ -223,7 +223,6 @@ void fat_cd( char * folder )
 
     strtok( filename, " " );
 
-    printf("Comparing %s and %s...\n", folder, filename );
     if( !strcmp( folder, filename ) )
       break;
 
@@ -236,15 +235,11 @@ void fat_cd( char * folder )
   }
   else
   {
-    printf("Found!\nName: %s\n", dir[check].DIR_Name );
     if( dir[check].DIR_Attr == 0x10 )
     {
-      printf("Found subdirectory.\n");
       currClus = dir[check].DIR_FirstClusterLow;
       if( currClus == 0 )
         currClus = 2;
-      nextClus = NextLB( currClus );
-      printf("Current Cluster To Go To: %d\nNext Cluster After: %d\n", currClus, nextClus);
       currPos = LBAToOffset( currClus );
     }
     else
