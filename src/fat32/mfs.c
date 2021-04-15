@@ -207,27 +207,35 @@ void fat_ls()
   return;
 }
 
+int file2index( char * filename )
+{
+  int check = 15;
+  char string[12];
+
+  while( check >= 0 )
+  {
+    strncpy( string, dir[check].DIR_Name, 11 );
+    string[11] = '\0';
+
+    strtok( string, " " );
+
+    if( !strcmp( filename, string ) )
+      break;
+
+    check--;
+  }
+
+  return check;
+
+}
+
  /*
  /
 */
 void fat_cd( char * folder )
 {
-  int check = 15;
-  char filename[12];
+  int check = file2index( folder );
   int currClus;
-
-  while( check >= 0 )
-  {
-    strncpy( filename, dir[check].DIR_Name, 11 );
-    filename[11] = '\0';
-
-    strtok( filename, " " );
-
-    if( !strcmp( folder, filename ) )
-      break;
-
-    check--;
-  }
 
   if( check == -1 )
   {
@@ -245,6 +253,18 @@ void fat_cd( char * folder )
     else
       printf("Error: File found but not subdirectory.\n");
   }
+
+  return;
+}
+
+ /*
+ /
+*/
+void fat_stat( char * filename )
+{
+  int check = file2index( filename );
+  printf("Attribute\tSize\tCluster Number\n");
+  printf("%d\t\t%d\t\t%d\n", dir[check].DIR_Attr, dir[check].DIR_FileSize, dir[check].DIR_FirstClusterLow );
 
   return;
 }
@@ -342,6 +362,9 @@ int main()
 
     if( !strcmp( token[0], "cd") )
       fat_cd( token[1] );
+
+    if( !strcmp( token[0], "stat") )
+      fat_stat( token[1] );
 
     free( working_root );
 
