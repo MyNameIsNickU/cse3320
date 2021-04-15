@@ -233,9 +233,13 @@ void fat_cd( char * folder )
   else
   {
     printf("Found!\nName: %s\n", dir[check].DIR_Name );
+    if( dir[check].DIR_Attr == 0x10 )
+    {
+      printf("Found subdirectory.\n");
+    }
+    else
+      printf("Error: File found but not subdirectory.\n");
   }
-
-  printf("check is %d\n", check);
 
   return;
 }
