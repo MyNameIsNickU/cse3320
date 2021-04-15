@@ -204,6 +204,42 @@ void fat_ls()
   return;
 }
 
+ /*
+ /
+*/
+void fat_cd( char * folder )
+{
+  int check = 15;
+  char filename[12];
+
+  while( check >= 0 )
+  {
+    strncpy( filename, dir[check].DIR_Name, 11 );
+    filename[11] = '\0';
+
+    strtok( filename, " " );
+
+    printf("Comparing %s and %s...\n", folder, filename );
+    if( !strcmp( folder, filename ) )
+      break;
+
+    check--;
+  }
+
+  if( check == -1 )
+  {
+    printf("Error: Directory %s not found.\n", folder);
+  }
+  else
+  {
+    printf("Found!\nName: %s\n", dir[check].DIR_Name );
+  }
+
+  printf("check is %d\n", check);
+
+  return;
+}
+
 int main()
 {
 
@@ -289,10 +325,14 @@ int main()
     }
 
     /*
-    /
+    /  LIST DIRECTORY CONTENTS = 'ls'
+    /  description
    */
     if( !strcmp( token[0], "ls") )
       fat_ls();
+
+    if( !strcmp( token[0], "cd") )
+      fat_cd( token[1] );
 
     free( working_root );
 
