@@ -30,6 +30,7 @@ CSE 3320 - Sec 003
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -45,6 +46,49 @@ CSE 3320 - Sec 003
 
 
 FILE *fp;
+
+struct __attribute__((__packed__)) DirectoryEntry
+{
+  char DIR_Name[11];
+  uint8_t DIR_Attr;
+  uint8_t Unused1[8];
+  uint16_t DIR_FirstCluterHigh;
+  uint8_t Unused2[4];
+  uint16_t DIR_FirstClusterLow;
+  uint32_t DIR_FileSize;
+};
+
+struct DirectoryEntry dir[16];
+
+
+int16_t BPB_BytsPerSec;
+int8_t BPB_SecPerClus;
+int16_t BPB_RsvdSecCnt;
+int8_t BPB_NumFATs;
+int32_t BPB_FATSz32;
+
+ /*
+ /
+*/
+void fat_InfoFill()
+{
+  fseek( fp, 11, SEEK_SET );
+  fread( &BPB_BytsPerSec, 2, 1, fp );
+
+  fseek( fp, 13, SEEK_SET );
+  fread( &BPB_SecPerClus, 1, 1, fp );
+
+  fseek( fp, 14, SEEK_SET );
+  fread( &BPB_RsvdSecCnt, 2, 1, fp );
+
+  fseek( fp, 16, SEEK_SET );
+  fread( &BPB_NumFATs, 2, 1, fp );
+
+  fseek( fp, 36, SEEK_SET );
+  fread( &BPB_FATSz32, 4, 1, fp );
+
+  return;
+}
 
  /*
  /
@@ -66,6 +110,7 @@ int fat_open( char * filename )
   else
   {
    printf("Image opened successfully.\n");
+   fat_InfoFill();
    return 1;
   }
 }
@@ -89,47 +134,51 @@ int fat_close()
   }
 }
 
-char BS_OEMName[8];
-int16_t BPB_BytsPerSec;
-int8_t BPB_SecPerClus;
-int16_t BPB_RsvdSecCnt;
-int8_t BPB_NumFATs;
-int32_t BPB_FATSz32;
+void fat_infoList()
+{
+  printf("---INFO---\n");
+  printf("BPB_BytsPerSec = %7d%15x\n", BPB_BytsPerSec, BPB_BytsPerSec);
+  printf("BPB_SecPerClus = %7d%15x\n", BPB_SecPerClus, BPB_SecPerClus);
+  printf("BPB_RsvdSecCnt = %7d%15x\n", BPB_RsvdSecCnt, BPB_RsvdSecCnt);
+  printf("BPB_NumFATs = %7d%15x\n", BPB_NumFATs, BPB_NumFATs);
+  printf("BPB_FATzS32 = %7d%15x\n", BPB_FATSz32, BPB_FATSz32);
+  return;
+}
+
+int currPos = 0;
 
  /*
  /
 */
-void fat_info()
+void fat_ls()
 {
-  printf("---INFO---\n");
+  int start = (BPB_NumFATs * BPB_FATSz32 * BPB_BytsPerSec) + (BPB_RsvdSecCnt * BPB_BytsPerSec);
 
+  if( currPos == 0 )
+    currPos = start;
 
-  fseek( fp, 3, SEEK_SET);
-  fread( BS_OEMName, 8, 1, fp );
-  printf("BS_OEMName = %s\n", BS_OEMName);
+  printf("Seeking to currPos = %d\n", currPos);
+  fseek( fp, currPos, SEEK_SET );
+  int i;
+  for(i = 0; i < 16; i++)
+  {
+    fread( &dir[i], sizeof( struct DirectoryEntry ), 1, fp );
+  }
 
-  fseek( fp, 11, SEEK_SET );
-  fread( &BPB_BytsPerSec, 2, 1, fp );
-  printf("BPB_BytsPerSec = %d\n", BPB_BytsPerSec);
-
-  fseek( fp, 13, SEEK_SET );
-  fread( &BPB_SecPerClus, 1, 1, fp );
-  printf("BPB_SecPerClus = %d\n", BPB_SecPerClus);
-
-  fseek( fp, 14, SEEK_SET );
-  fread( &BPB_RsvdSecCnt, 2, 1, fp );
-  printf("BPB_RsvdSecCnt = %d\n", BPB_RsvdSecCnt);
-
-  fseek( fp, 16, SEEK_SET );
-  fread( &BPB_NumFATs, 2, 1, fp );
-  printf("BPB_NumFATs = %d\n", BPB_NumFATs );
-
-  fseek( fp, 36, SEEK_SET );
-  fread( &BPB_FATSz32, 4, 1, fp );
-  printf("BPB_FATzS32 = %d\n", BPB_FATSz32);
+  char filename[12];
+  for(i = 0; i < 16; i++)
+  {
+    if(dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20)
+    {
+      strncpy( filename, dir[i].DIR_Name, 11 );
+      filename[11] = '\0';
+      printf("%s\n", filename);
+    }
+  }
 
   return;
 }
+
 int main()
 {
 
@@ -211,9 +260,14 @@ int main()
    */
     if( !strcmp( token[0], "info") )
     {
-      fat_info();
+      fat_infoList();
     }
 
+    /*
+    /
+   */
+    if( !strcmp( token[0], "ls") )
+      fat_ls();
 
     free( working_root );
 
