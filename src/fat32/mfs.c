@@ -119,6 +119,15 @@ void fat_info()
   fseek( fp, 14, SEEK_SET );
   fread( &BPB_RsvdSecCnt, 2, 1, fp );
   printf("BPB_RsvdSecCnt = %d\n", BPB_RsvdSecCnt);
+
+  fseek( fp, 16, SEEK_SET );
+  fread( &BPB_NumFATs, 2, 1, fp );
+  printf("BPB_NumFATs = %d\n", BPB_NumFATs );
+
+  fseek( fp, 36, SEEK_SET );
+  fread( &BPB_FATSz32, 4, 1, fp );
+  printf("BPB_FATzS32 = %d\n", BPB_FATSz32);
+
   return;
 }
 int main()
