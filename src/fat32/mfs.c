@@ -401,7 +401,7 @@ void fat_read( char * filename, int pos, int byt )
     while( sizeLeft > 0 && bCount != ClusterSize )
     {
       transfer = getc( fp );
-      printf("%c", transfer);
+      printf("%x ", transfer);
       sizeLeft--;
       bCount++;
     }
