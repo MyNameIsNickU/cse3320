@@ -180,19 +180,8 @@ void fat_infoList()
 */
 void fat_ls()
 {
-  int start = (BPB_NumFATs * BPB_FATSz32 * BPB_BytsPerSec) + (BPB_RsvdSecCnt * BPB_BytsPerSec);
-
-  if( currPos == 0 )
-    currPos = start;
-
-  fseek( fp, currPos, SEEK_SET );
-  int i;
-  for(i = 0; i < 16; i++)
-  {
-    fread( &dir[i], sizeof( struct DirectoryEntry ), 1, fp );
-  }
-
   char filename[12];
+  int i;
   for(i = 0; i < 16; i++)
   {
     if( dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20 )
@@ -288,20 +277,20 @@ void fat_get( char * filename )
     return;
   }
 
+// Adds proper file naming/type when creating file.
+//------------------------------
   char type[4];
   strtok( filename, " ");
-  printf("filename: %s\n", filename);
-
   int i;
   for(i = 0; i < 3; i++)
   {
     type[i] = dir[check].DIR_Name[8+i];
   }
   type[3] = '\0';
-  printf("Filetype is: %s\n", type);
 
   strcat(filename, ".");
   strcat(filename, type);
+//------------------------------
 
   FILE *newFile;
   newFile = fopen( filename, "w" );
@@ -311,9 +300,11 @@ void fat_get( char * filename )
   }
 
   int nextClus, readPos;
+  uint32_t sizeLeft = dir[check].DIR_FileSize;
+  printf("Initial sizeLeft = %d\n", sizeLeft);
   int currClus = dir[check].DIR_FirstClusterLow;
-  int bCount = 256;
   char transfer;
+  int bCount = 0;
 
   while( currClus != -1 )
   {
@@ -323,13 +314,15 @@ void fat_get( char * filename )
     fseek( fp, readPos, SEEK_SET );
 
     // Reads 32 Bytes from image file and copies it to the newfile.
-    while( bCount > 0 )
+    while( sizeLeft > 0 && bCount != 512 )
     {
       transfer = getc( fp );
       putc( transfer, newFile );
-      bCount--;
+      sizeLeft--;
+      bCount++;
     }
-    bCount = 256;
+    bCount = 0;
+    printf("sizeLeft after read loop: %d\n", sizeLeft);
     currClus = nextClus;
 
   }
@@ -394,6 +387,18 @@ int main()
       continue;
     }
 
+
+    // If file image is open, update all neccessary position and directory information.
+    if( fp != NULL )
+    {
+      if( currPos == 0 )
+        currPos = (BPB_NumFATs * BPB_FATSz32 * BPB_BytsPerSec) + (BPB_RsvdSecCnt * BPB_BytsPerSec);
+      fseek( fp, currPos, SEEK_SET );
+      int i;
+      for(i = 0; i < 16; i++)
+        fread( &dir[i], sizeof( struct DirectoryEntry ), 1, fp );
+    }
+
     /*
     /  OPEN THE FILE SYSTEM = 'open'
     /  Attempts to open the file system if the file pointer is empty.
@@ -403,6 +408,7 @@ int main()
     if( !strcmp( token[0], "open" ) )
     {
       fat_open( token[1] );
+      continue;
     }
 
     /*
@@ -414,6 +420,7 @@ int main()
     if( !strcmp( token[0], "close") )
     {
       fat_close();
+      continue;
     }
 
     /*
@@ -423,6 +430,7 @@ int main()
     if( !strcmp( token[0], "info") )
     {
       fat_infoList();
+      continue;
     }
 
     /*
@@ -430,7 +438,10 @@ int main()
     /  description
    */
     if( !strcmp( token[0], "ls") )
+    {
       fat_ls();
+      continue;
+    }
 
     if( !strcmp( token[0], "cd") )
       fat_cd( token[1] );
