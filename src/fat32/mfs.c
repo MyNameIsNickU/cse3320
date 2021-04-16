@@ -35,7 +35,7 @@ CSE 3320 - Sec 003
 #include <errno.h>
 #include <string.h>
 
-#define MAX_NUM_ARGUMENTS 3
+#define MAX_NUM_ARGUMENTS 4
 
 #define WHITESPACE " \t\n"      // We want to split our command line up into tokens
                                 // so we need to define what delimits our tokens.
@@ -333,7 +333,6 @@ void fat_get( char * filename )
     printf("Error: Failed to create file: %s", filename );
   }
 
-  int nextClus, readPos;
   uint32_t sizeLeft = dir[check].DIR_FileSize;
   int currClus = dir[check].DIR_FirstClusterLow;
   char transfer;
@@ -341,9 +340,7 @@ void fat_get( char * filename )
 
   while( currClus != -1 )
   {
-    nextClus = NextLB( currClus );
-    readPos = LBAToOffset( currClus );
-    fseek( fp, readPos, SEEK_SET );
+    fseek( fp, LBAToOffset( currClus ), SEEK_SET );
 
     // Reads 32 Bytes from image file and copies it to the newfile.
     while( sizeLeft > 0 && bCount != BPB_BytsPerSec )
@@ -354,7 +351,7 @@ void fat_get( char * filename )
       bCount++;
     }
     bCount = 0;
-    currClus = nextClus;
+    currClus = NextLB( currClus );
 
   }
 
@@ -362,6 +359,57 @@ void fat_get( char * filename )
 
   if( newFile != NULL )
     fclose( newFile );
+  return;
+}
+
+ /*
+ /
+*/
+void fat_read( char * filename, int pos, int byt )
+{
+  printf("file: %s\tpos: %d\tbyt: %d\n", filename, pos, byt);
+
+  int check = file2index( filename );
+  if( check == -1 )
+  {
+    printf("Error: File %s not found.\n", filename);
+    return;
+  }
+
+
+  uint32_t sizeLeft = byt;
+  int clusNum = pos / ClusterSize;
+  int currClus = dir[check].DIR_FirstClusterLow;
+
+  printf("Clusters to move: %d\n", clusNum);
+  while( clusNum > 0 )
+  {
+    currClus = NextLB( currClus );
+    clusNum--;
+  }
+  clusNum = pos % ClusterSize;
+  fseek( fp, LBAToOffset( currClus ), SEEK_SET );
+  fseek( fp, clusNum, SEEK_CUR );
+
+  char transfer;
+  int bCount = 0;
+  int bytsRead = 0;
+
+  while( bytsRead != byt && currClus != -1 )
+  {
+    // Reads 32 Bytes from image file and copies it to the newfile.
+    while( sizeLeft > 0 && bCount != ClusterSize )
+    {
+      transfer = getc( fp );
+      printf("%c", transfer);
+      sizeLeft--;
+      bCount++;
+    }
+    bCount = 0;
+    currClus = NextLB( currClus );
+    fseek( fp, LBAToOffset( currClus ), SEEK_SET );
+  }
+  printf("\n");
   return;
 }
 
@@ -495,6 +543,16 @@ int main()
       continue;
     }
 
+    if( !strcmp( token[0], "read") )
+    {
+      if( token[1] == NULL || token[2] == NULL || token[3] == NULL )
+      {
+        printf("Error: 'read' requires 3, non-zero arguments.\n");
+        continue;
+      }
+      fat_read( token[1], atoi(token[2]), atoi(token[3]) );
+      continue;
+    }
 
     if(token[0] != NULL)
       printf("Error: command '%s' not found.\n", token[0]);
