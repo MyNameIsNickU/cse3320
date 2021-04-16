@@ -265,12 +265,53 @@ void fat_stat( char * filename )
   int check = file2index( filename );
   if( check == -1 )
   {
-    printf("Error: File not found.\n");
+    printf("Error: File %s not found.\n", filename);
     return;
   }
   printf("Attribute\tSize\tStarting Cluster Number\n");
   printf("%d\t\t%d\t%d\n", dir[check].DIR_Attr, dir[check].DIR_FileSize, dir[check].DIR_FirstClusterLow );
 
+  return;
+}
+
+ /*
+ /
+*/
+void fat_get( char * filename )
+{
+  printf("Getting file %s...\n", filename);
+  int check = file2index( filename );
+
+  if( check == -1 )
+  {
+    printf("Error: File %s not found.\n", filename);
+    return;
+  }
+
+  FILE *newFile;
+  newFile = fopen( filename, "w" );
+  if( newFile == NULL )
+  {
+    printf("Error: Failed to create file: %s", filename );
+  }
+
+  int nextClus, readPos;
+  int currClus = dir[check].DIR_FirstClusterLow;
+
+  while( currClus != -1 )
+  {
+    nextClus = NextLB( currClus );
+    printf("The current cluster # is: %d\tThe Next Cluster # is: %d\n", currClus, nextClus);
+    readPos = LBAToOffset( currClus );
+    fseek( fp, readPos, SEEK_SET );
+    currClus = nextClus;
+
+  }
+
+  fseek( fp, currPos, SEEK_SET );
+
+  if( newFile != NULL )
+    fclose( newFile );
   return;
 }
 
@@ -370,6 +411,9 @@ int main()
 
     if( !strcmp( token[0], "stat") )
       fat_stat( token[1] );
+
+    if( !strcmp( token[0], "get") )
+      fat_get( token[1] );
 
     free( working_root );
 
