@@ -94,6 +94,17 @@ int16_t NextLB( uint32_t sector )
   return val;
 }
 
+void updatePosition()
+{
+  if( currPos == 0 )
+    currPos = (BPB_NumFATs * BPB_FATSz32 * BPB_BytsPerSec) + (BPB_RsvdSecCnt * BPB_BytsPerSec);
+  fseek( fp, currPos, SEEK_SET );
+  int i;
+  for(i = 0; i < 16; i++)
+    fread( &dir[i], sizeof( struct DirectoryEntry ), 1, fp );
+  return;
+}
+
  /*
  /
 */
@@ -140,6 +151,7 @@ int fat_open( char * filename )
   {
    printf("Image opened successfully.\n");
    fat_InfoFill();
+   updatePosition();
    return 1;
   }
 }
@@ -180,6 +192,8 @@ void fat_infoList()
 */
 void fat_ls()
 {
+  updatePosition();
+
   char filename[12];
   int i;
   for(i = 0; i < 16; i++)
@@ -248,6 +262,8 @@ void fat_cd( char * folder )
     else
       printf("Error: File found but not subdirectory.\n");
   }
+
+  updatePosition();
 
   return;
 }
@@ -402,18 +418,6 @@ int main()
       continue;
     }
 
-
-    // If file image is open, update all neccessary position and directory information.
-    if( fp != NULL )
-    {
-      if( currPos == 0 )
-        currPos = (BPB_NumFATs * BPB_FATSz32 * BPB_BytsPerSec) + (BPB_RsvdSecCnt * BPB_BytsPerSec);
-      fseek( fp, currPos, SEEK_SET );
-      int i;
-      for(i = 0; i < 16; i++)
-        fread( &dir[i], sizeof( struct DirectoryEntry ), 1, fp );
-    }
-
     /*
     /  OPEN THE FILE SYSTEM = 'open'
     /  Attempts to open the file system if the file pointer is empty.
@@ -445,6 +449,7 @@ int main()
     if( !strcmp( token[0], "info") )
     {
       fat_infoList();
+      continue;
     }
 
     /*
@@ -454,20 +459,45 @@ int main()
     if( !strcmp( token[0], "ls") )
     {
       fat_ls();
+      continue;
     }
+
 
     if( !strcmp( token[0], "cd") )
     {
-      fat_cd( token[1] );
+      char * cd_array[255];
+      char * found, *cd_arg;
+      int cd_count = 0;
+      cd_arg = strdup (token[1]);
+      //printf("cd_arg: %s\n", cd_arg);
+
+      while( (found = strsep( &cd_arg, "/")) != NULL )
+      {
+        //printf("found: %s\n", found);
+        cd_array[cd_count++] = strdup( found );
+      }
+
+      int i;
+      for(i = 0; i < cd_count; i++)
+        fat_cd( cd_array[i] );
+      continue;
     }
 
     if( !strcmp( token[0], "stat") )
     {
       fat_stat( token[1] );
+      continue;
     }
 
     if( !strcmp( token[0], "get") )
+    {
       fat_get( token[1] );
+      continue;
+    }
+
+
+    if(token[0] != NULL)
+      printf("Error: command '%s' not found.\n", token[0]);
 
     free( working_root );
 
