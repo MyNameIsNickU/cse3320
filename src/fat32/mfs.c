@@ -194,6 +194,7 @@ void fat_ls()
 {
   updatePosition();
 
+  printf(".\n");
   char filename[12];
   int i;
   for(i = 0; i < 16; i++)
@@ -242,6 +243,8 @@ void fat_cd( char * folder )
     printf("Error: 'cd' requires second argument.\n");
     return;
   }
+  else if( !strcmp( folder, ".") )
+    return;
 
   int check = file2index( folder );
   int currClus;
@@ -332,7 +335,6 @@ void fat_get( char * filename )
 
   int nextClus, readPos;
   uint32_t sizeLeft = dir[check].DIR_FileSize;
-  printf("Initial sizeLeft = %d\n", sizeLeft);
   int currClus = dir[check].DIR_FirstClusterLow;
   char transfer;
   int bCount = 0;
@@ -341,7 +343,6 @@ void fat_get( char * filename )
   {
     nextClus = NextLB( currClus );
     readPos = LBAToOffset( currClus );
-    printf("Going to position %d\n", readPos);
     fseek( fp, readPos, SEEK_SET );
 
     // Reads 32 Bytes from image file and copies it to the newfile.
@@ -353,7 +354,6 @@ void fat_get( char * filename )
       bCount++;
     }
     bCount = 0;
-    printf("sizeLeft after read loop: %d\n", sizeLeft);
     currClus = nextClus;
 
   }
