@@ -223,6 +223,12 @@ int file2index( char * filename )
 */
 void fat_cd( char * folder )
 {
+  if( folder == NULL )
+  {
+    printf("Error: 'cd' requires second argument.\n");
+    return;
+  }
+
   int check = file2index( folder );
   int currClus;
 
@@ -251,6 +257,11 @@ void fat_cd( char * folder )
 */
 void fat_stat( char * filename )
 {
+  if( filename == NULL )
+  {
+    printf("Error: 'stat' requires second argument.\n");
+    return;
+  }
   int check = file2index( filename );
   if( check == -1 )
   {
@@ -268,7 +279,11 @@ void fat_stat( char * filename )
 */
 void fat_get( char * filename )
 {
-  printf("Getting file %s...\n", filename);
+  if( filename == NULL )
+  {
+    printf("Error: 'get' requires second argument.\n");
+    return;
+  }
   int check = file2index( filename );
 
   if( check == -1 )
@@ -314,7 +329,7 @@ void fat_get( char * filename )
     fseek( fp, readPos, SEEK_SET );
 
     // Reads 32 Bytes from image file and copies it to the newfile.
-    while( sizeLeft > 0 && bCount != 512 )
+    while( sizeLeft > 0 && bCount != BPB_BytsPerSec )
     {
       transfer = getc( fp );
       putc( transfer, newFile );
@@ -430,7 +445,6 @@ int main()
     if( !strcmp( token[0], "info") )
     {
       fat_infoList();
-      continue;
     }
 
     /*
@@ -440,14 +454,17 @@ int main()
     if( !strcmp( token[0], "ls") )
     {
       fat_ls();
-      continue;
     }
 
     if( !strcmp( token[0], "cd") )
+    {
       fat_cd( token[1] );
+    }
 
     if( !strcmp( token[0], "stat") )
+    {
       fat_stat( token[1] );
+    }
 
     if( !strcmp( token[0], "get") )
       fat_get( token[1] );
