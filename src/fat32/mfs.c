@@ -288,6 +288,21 @@ void fat_get( char * filename )
     return;
   }
 
+  char type[4];
+  strtok( filename, " ");
+  printf("filename: %s\n", filename);
+
+  int i;
+  for(i = 0; i < 3; i++)
+  {
+    type[i] = dir[check].DIR_Name[8+i];
+  }
+  type[3] = '\0';
+  printf("Filetype is: %s\n", type);
+
+  strcat(filename, ".");
+  strcat(filename, type);
+
   FILE *newFile;
   newFile = fopen( filename, "w" );
   if( newFile == NULL )
@@ -303,10 +318,11 @@ void fat_get( char * filename )
   while( currClus != -1 )
   {
     nextClus = NextLB( currClus );
-    //printf("The current cluster # is: %d\tThe Next Cluster # is: %d\n", currClus, nextClus);
     readPos = LBAToOffset( currClus );
     printf("Going to position %d\n", readPos);
     fseek( fp, readPos, SEEK_SET );
+
+    // Reads 32 Bytes from image file and copies it to the newfile.
     while( bCount > 0 )
     {
       transfer = getc( fp );
