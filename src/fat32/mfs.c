@@ -297,13 +297,23 @@ void fat_get( char * filename )
 
   int nextClus, readPos;
   int currClus = dir[check].DIR_FirstClusterLow;
+  int bCount = 256;
+  char transfer;
 
   while( currClus != -1 )
   {
     nextClus = NextLB( currClus );
-    printf("The current cluster # is: %d\tThe Next Cluster # is: %d\n", currClus, nextClus);
+    //printf("The current cluster # is: %d\tThe Next Cluster # is: %d\n", currClus, nextClus);
     readPos = LBAToOffset( currClus );
+    printf("Going to position %d\n", readPos);
     fseek( fp, readPos, SEEK_SET );
+    while( bCount > 0 )
+    {
+      transfer = getc( fp );
+      putc( transfer, newFile );
+      bCount--;
+    }
+    bCount = 256;
     currClus = nextClus;
 
   }
