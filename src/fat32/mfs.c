@@ -44,10 +44,16 @@ CSE 3320 - Sec 003
 
 #define MAX_COMMAND_SIZE 255    // The maximum command-line size
 
-
+// Tracks the current position in the File System.
 int currPos = 0;
+
+// File pointer for opening and navigating File System Image.
 FILE *fp;
 
+ /*
+ /   Packed struct for each entry in the FAT32 system.
+ /   When read, data will go directly into variables without padding.
+*/
 struct __attribute__((__packed__)) DirectoryEntry
 {
   char DIR_Name[11];
@@ -59,9 +65,11 @@ struct __attribute__((__packed__)) DirectoryEntry
   uint32_t DIR_FileSize;
 };
 
+// Array of each entry that is refilled on each movement through file system.
 struct DirectoryEntry dir[16];
 
 
+// Statistic variables for FAT32
 int16_t BPB_BytsPerSec;
 int8_t BPB_SecPerClus;
 int16_t BPB_RsvdSecCnt;
@@ -94,6 +102,10 @@ int16_t NextLB( uint32_t sector )
   return val;
 }
 
+ /*
+ /   Seeks the file pointer to the correct position in the file system.
+ /   Runs on initial read of filesystem, before each ls, and on each cd move.
+*/
 void updatePosition()
 {
   if( currPos == 0 )
@@ -106,7 +118,7 @@ void updatePosition()
 }
 
  /*
- /
+ /  Fills the statistic variables on the inital read of FAT32 File System.
 */
 void fat_InfoFill()
 {
@@ -131,7 +143,9 @@ void fat_InfoFill()
 }
 
  /*
- /
+ /   Opens the file system and sets the global file pointer.
+ /   Error handling for already open case and can't open case.
+ /   If successful, fills the statistic variables and updates the file position to the root directory.
 */
 int fat_open( char * filename )
 {
@@ -157,7 +171,8 @@ int fat_open( char * filename )
 }
 
  /*
- /
+ /   Closes the file pointer to the FAT32 image.
+ /   Handles the case if the fp isn't open.
 */
 int fat_close()
 {
@@ -175,6 +190,8 @@ int fat_close()
   }
 }
 
+
+// Lists the FAT32 Stats in decimal and hex.
 void fat_infoList()
 {
   printf("---INFO---\n");
@@ -188,7 +205,9 @@ void fat_infoList()
 
 
  /*
- /
+ /   Lists the entires in the current directory.
+ /   Updates the entry array and file pointer.
+ /   Checks the file attribute for valid printable entries.
 */
 void fat_ls()
 {
@@ -211,6 +230,12 @@ void fat_ls()
   return;
 }
 
+
+ /*
+ /   Checks the entry directory array for the given string...
+ /   ...and returns the index if found.
+ /   Returns -1 if not found.
+*/
 int file2index( char * filename )
 {
   int check = 15;
@@ -234,7 +259,10 @@ int file2index( char * filename )
 }
 
  /*
- /
+ /   Changes directory to the specified directory.
+ /   Finds the given folder's index and checks if it is a directory.
+ /   If directory is found, the LowCluster# is used to find file offset...
+ /   ...and the file pointer seeks to the offset location.
 */
 void fat_cd( char * folder )
 {
@@ -272,7 +300,8 @@ void fat_cd( char * folder )
 }
 
  /*
- /
+ /   If the file exists, finds the specified filename's index.
+ /   Prints out the attribute, file size, and cluster number of file.
 */
 void fat_stat( char * filename )
 {
@@ -294,7 +323,12 @@ void fat_stat( char * filename )
 }
 
  /*
- /
+ /   Gets a file from the FAT32 File System...
+ /   ...and puts the file in the relative directory of the utility.
+ /   Creates an empty file with correct type using last 3 chars of filename.
+ /   Seeks to the correct cluster and begins reading data into the file.
+ /   If the cluster ends and there is more data to read, find the next cluster.
+ /   If all of the requested file size has been read, close the file and return.
 */
 void fat_get( char * filename )
 {
@@ -363,11 +397,13 @@ void fat_get( char * filename )
 }
 
  /*
- /
+ /   Reads specified bytes from specified file.
+ /   Seeks to the correct initial cluster based on input position.
+ /   Prints out the specified bytes.
+ /   If the data is in different clusters, move across to the next cluster.
 */
 void fat_read( char * filename, int pos, int byt )
 {
-  printf("file: %s\tpos: %d\tbyt: %d\n", filename, pos, byt);
 
   int check = file2index( filename );
   if( check == -1 )
@@ -381,7 +417,6 @@ void fat_read( char * filename, int pos, int byt )
   int clusNum = pos / ClusterSize;
   int currClus = dir[check].DIR_FirstClusterLow;
 
-  printf("Clusters to move: %d\n", clusNum);
   while( clusNum > 0 )
   {
     currClus = NextLB( currClus );
@@ -492,7 +527,7 @@ int main()
 
     /*
     /  LIST IMAGE INFO = 'info'
-    /  description
+    /  Prints out information about the FAT 32 file system.
    */
     if( !strcmp( token[0], "info") )
     {
@@ -502,7 +537,7 @@ int main()
 
     /*
     /  LIST DIRECTORY CONTENTS = 'ls'
-    /  description
+    /  Lists the directory contents.
    */
     if( !strcmp( token[0], "ls") )
     {
@@ -511,17 +546,21 @@ int main()
     }
 
 
+    /*
+    /   CHANGE DIRECTORY = 'cd'
+    /   Parses the input for relative pathing (e.g. 'FOLDERA/FOLDERC/../FOLDERC')
+    /   While there are still '/' indicating relative paths, input each folder name...
+    /   ...into the fat_cd() function.
+   */
     if( !strcmp( token[0], "cd") )
     {
       char * cd_array[255];
       char * found, *cd_arg;
       int cd_count = 0;
       cd_arg = strdup (token[1]);
-      //printf("cd_arg: %s\n", cd_arg);
 
       while( (found = strsep( &cd_arg, "/")) != NULL )
       {
-        //printf("found: %s\n", found);
         cd_array[cd_count++] = strdup( found );
       }
 
@@ -531,18 +570,31 @@ int main()
       continue;
     }
 
+    /*
+    /   FILE ATTRIBUTES = 'stat'
+    /   Prints out data about specified file or directory.
+   */
     if( !strcmp( token[0], "stat") )
     {
       fat_stat( token[1] );
       continue;
     }
 
+    /*
+    /   GET FILE = 'get'
+    /   Pulls file from the file system and puts it in utility directory.
+   */
     if( !strcmp( token[0], "get") )
     {
       fat_get( token[1] );
       continue;
     }
 
+    /*
+    /   READ FILE = 'read'
+    /   Reads specified file for a specified # of bytes.
+    /   Checks if the required arguments are inputted.
+   */
     if( !strcmp( token[0], "read") )
     {
       if( token[1] == NULL || token[2] == NULL || token[3] == NULL )
@@ -554,6 +606,9 @@ int main()
       continue;
     }
 
+    /*
+    /   Catch-all for unrecognized commands.
+   */
     if(token[0] != NULL)
       printf("Error: command '%s' not found.\n", token[0]);
 
