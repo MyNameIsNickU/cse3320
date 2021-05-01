@@ -538,10 +538,26 @@ int main()
     /*
     /  LIST DIRECTORY CONTENTS = 'ls'
     /  Lists the directory contents.
+    /  Handles 'ls .' by doing a normal, no argument 'ls'
+    /  if 'ls ..' is used, do an internal 'cd ..' and normal 'ls'...
+    /  ...and then got back to the old position.
    */
     if( !strcmp( token[0], "ls") )
     {
-      fat_ls();
+      int oldPos = currPos;
+      if( token[1] != NULL )
+      {
+        if( !strcmp( token[1], ".") )
+          fat_ls();
+        else if( !strcmp( token[1], ".."))
+        {
+          fat_cd("..");
+          fat_ls();
+          currPos = oldPos;
+        }
+      }
+      else
+        fat_ls();
       continue;
     }
 
