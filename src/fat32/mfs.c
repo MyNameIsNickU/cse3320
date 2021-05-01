@@ -34,6 +34,7 @@ CSE 3320 - Sec 003
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
 
 #define MAX_NUM_ARGUMENTS 4
 
@@ -230,6 +231,51 @@ void fat_ls()
   return;
 }
 
+int isMatch(char * rawIMG, char * input)
+{
+  char imgName[12];
+  strncpy( imgName, rawIMG, 11 );
+  imgName[11] = '\0';
+
+  int len = strlen(input);
+  char workInput[ len + 1 ];
+  strncpy( workInput, input, len + 1 );
+
+  char expanded_name[12];
+  memset( expanded_name, ' ', 12 );
+
+  char * token = strtok( workInput, "." );
+
+  if( token == NULL )
+  {
+    strtok(imgName, " ");
+    if( !strcmp( imgName, "..") )
+      return 1;
+    else
+      return -1;
+  }
+
+  strncpy( expanded_name, token, strlen(token) );
+
+  token = strtok( NULL, "." );
+
+  if( token )
+    strncpy( (char*)(expanded_name+8), token, strlen( token ) );
+
+  expanded_name[11] = '\0';
+
+  int i;
+  for( i = 0; i < 11; i++ )
+    expanded_name[i] = toupper( expanded_name[i] );
+
+  //printf("Expanded: %s\nIMG: %s\n", expanded_name, imgName);
+  if( strncmp( expanded_name, imgName, 11) == 0 )
+    return 1;
+  else
+    return -1;
+
+}
+
 
  /*
  /   Checks the entry directory array for the given string...
@@ -248,7 +294,7 @@ int file2index( char * filename )
 
     strtok( string, " " );
 
-    if( !strcmp( filename, string ) )
+    if( isMatch(dir[check].DIR_Name, filename) == 1 )
       break;
 
     check--;
@@ -345,20 +391,11 @@ void fat_get( char * filename )
     return;
   }
 
-// Adds proper file naming/type when creating file.
-//------------------------------
-  char type[4];
-  strtok( filename, " ");
-  int i;
-  for(i = 0; i < 3; i++)
+  if( dir[check].DIR_Attr == 0x10 )
   {
-    type[i] = dir[check].DIR_Name[8+i];
+    printf("Error: File is subdirectory, cannot 'get'.\n");
+    return;
   }
-  type[3] = '\0';
-
-  strcat(filename, ".");
-  strcat(filename, type);
-//------------------------------
 
   FILE *newFile;
   newFile = fopen( filename, "w" );
@@ -412,6 +449,11 @@ void fat_read( char * filename, int pos, int byt )
     return;
   }
 
+  if( dir[check].DIR_Attr == 0x10 )
+  {
+    printf("Error: File is subdirectory, cannot 'read'.\n");
+    return;
+  }
 
   uint32_t sizeLeft = byt;
   int clusNum = pos / ClusterSize;
