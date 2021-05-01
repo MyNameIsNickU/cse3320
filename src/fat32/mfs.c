@@ -231,6 +231,11 @@ void fat_ls()
   return;
 }
 
+ /*
+ /   Returns value if the input file name is equal to the entry name.
+ /   Tokenizes the input and expands it into the same format as FAT32 entry.
+ /   Handles the '..' for 'cd' by checking that input individually and seperately returning.
+*/
 int isMatch(char * rawIMG, char * input)
 {
   char imgName[12];
@@ -246,6 +251,7 @@ int isMatch(char * rawIMG, char * input)
 
   char * token = strtok( workInput, "." );
 
+  // Handler for 'cd ..'
   if( token == NULL )
   {
     strtok(imgName, " ");
@@ -268,7 +274,6 @@ int isMatch(char * rawIMG, char * input)
   for( i = 0; i < 11; i++ )
     expanded_name[i] = toupper( expanded_name[i] );
 
-  //printf("Expanded: %s\nIMG: %s\n", expanded_name, imgName);
   if( strncmp( expanded_name, imgName, 11) == 0 )
     return 1;
   else
