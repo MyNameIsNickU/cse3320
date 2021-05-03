@@ -541,6 +541,9 @@ int main()
     }
 
 
+    if(token[0] == NULL)
+      continue;
+
     // Trying to use command when file system isn't open
     if( fp == NULL && strcmp( token[0], "open" ) )
     {
