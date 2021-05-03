@@ -214,12 +214,11 @@ void fat_ls()
 {
   updatePosition();
 
-  printf(".\n");
   char filename[12];
   int i;
   for(i = 0; i < 16; i++)
   {
-    if( dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20 )
+    if( dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20 || dir[i].DIR_Attr == 0x30 )
     {
       strncpy( filename, dir[i].DIR_Name, 11 );
       filename[11] = '\0';
@@ -255,7 +254,7 @@ int isMatch(char * rawIMG, char * input)
   if( token == NULL )
   {
     strtok(imgName, " ");
-    if( !strcmp( imgName, "..") )
+    if( !strcmp( imgName, input ) )
       return 1;
     else
       return -1;
